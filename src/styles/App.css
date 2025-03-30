@@ -1,0 +1,100 @@
+:root {
+  /* Light mode (default) */
+  --background: #fff;
+  --text: #333;
+  --border: #ddd;
+  --card-bg: #f9f9f9;
+  --primary: #4CAF50;
+  --secondary: #1976d2;
+  --highlight: #f5f5f5;
+}
+
+[data-theme="dark"] {
+  /* Dark mode */
+  --background: #1a1a1a;
+  --text: #e0e0e0;
+  --border: #444;
+  --card-bg: #2c2c2c;
+  --primary: #66BB6A;
+  --secondary: #42A5F5;
+  --highlight: #333;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Update existing component styles */
+.task-list, .employee-dashboard, .supervisor-dashboard, .manager-dashboard, .profile-container, .notifications {
+  background-color: var(--background);
+  border-color: var(--border);
+}
+
+.task-list th, .request-status-list th, .request-approval th {
+  background-color: var(--highlight);
+}
+
+.profile-stats, .comments-section li {
+  background-color: var(--card-bg);
+  border-color: var(--border);
+}
+
+button {
+  background-color: var(--primary);
+  color: var(--text);
+}
+
+button:hover {
+  background-color: darken(var(--primary), 10%);
+}
+
+.task-form button, .manager-dashboard button, .back-btn, .comments-section button {
+  background-color: var(--secondary);
+}
+
+.task-form button:hover, .manager-dashboard button:hover, .back-btn:hover, .comments-section button:hover {
+  background-color: darken(var(--secondary), 10%);
+}
+
+.priority-high { color: #ef5350; }
+.priority-medium { color: #ff9800; }
+.priority-low { color: #4CAF50; }
+.status-approved { color: var(--primary); }
+.status-pending { color: #f57c00; }
+.status-rejected { color: #ef5350; }
+.success-message { color: var(--primary); }
+
+.dark-mode-animation {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(66, 165, 245, 0.6) 50%, rgba(26, 26, 26, 0) 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: burst 0.8s ease-out forwards;
+  z-index: 9999;
+}
+
+@keyframes burst {
+  0% {
+    width: 10px;
+    height: 10px;
+    opacity: 1;
+  }
+  50% {
+    width: 500px;
+    height: 500px;
+    opacity: 0.7;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  }
+  100% {
+    width: 2000px;
+    height: 2000px;
+    opacity: 0;
+  }
+}

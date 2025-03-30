@@ -1,0 +1,19 @@
+.request-status-list {
+    margin: 20px 0;
+  }
+  
+  .request-status-list table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .request-status-list th, 
+  .request-status-list td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+  
+  .status-pending { background: #fff3cd; color: #856404; }
+  .status-approved { background: #d4edda; color: #155724; }
+  .status-rejected { background: #f8d7da; color: #721c24; }

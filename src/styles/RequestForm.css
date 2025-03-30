@@ -1,0 +1,22 @@
+.request-form {
+    margin: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    max-width: 400px;
+  }
+  
+  .request-form input,
+  .request-form select {
+    display: block;
+    margin: 10px 0;
+    padding: 8px;
+    width: 100%;
+  }
+  
+  .request-form button {
+    background: #4CAF50;
+    color: white;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+  }
