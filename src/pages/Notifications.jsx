@@ -1,0 +1,39 @@
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
+import { DashboardShell } from "@/components/layout/DashboardShell";
+import { useAuth } from "@/context/AuthContext";
+import NotificationSettings from "@/components/notifications/NotificationSettings";
+import NotificationsList from "@/components/notifications/NotificationsList";
+
+const Notifications = () => {
+  const { user } = useAuth();
+  const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false);
+
+  return (
+    <DashboardShell
+      title="Notifications"
+      subtitle="Stay updated with important information"
+      actions={
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setNotificationSettingsOpen(true)}
+        >
+          <Settings className="h-4 w-4 mr-2" />
+          Notification Settings
+        </Button>
+      }
+    >
+      <NotificationsList />
+
+      {/* Add NotificationSettings modal */}
+      <NotificationSettings
+        open={notificationSettingsOpen}
+        onOpenChange={setNotificationSettingsOpen}
+      />
+    </DashboardShell>
+  );
+};
+
+export default Notifications;
