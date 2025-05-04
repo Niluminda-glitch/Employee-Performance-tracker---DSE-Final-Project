@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { SeparatorWithText } from "@/components/ui/separator-with-text";
+import { useCursorEffect } from "@/hooks/use-cursor-effect";
 import SkillMatrix from "@/components/SkillMatrix";
 import ProfileEditor from "@/components/ProfileEditor";
 
@@ -21,6 +22,14 @@ const Profile = () => {
   const [newSkill, setNewSkill] = useState("");
   const [skillView, setSkillView] = useState("list");
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+
+  // Customize cursor effect for profile page
+  useCursorEffect({
+    size: 70,
+    color: 'rgba(124, 58, 237, 0.06)', // Indigo color for profile
+    opacity: 0.7,
+    blur: 'xl'
+  }, []);
 
   // Helper to format join date
   const formatJoinDate = (dateString) => {

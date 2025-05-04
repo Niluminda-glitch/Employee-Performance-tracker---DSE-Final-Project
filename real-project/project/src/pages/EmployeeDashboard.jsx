@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import TopNavigation from "@/components/TopNavigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useCursorEffect } from "@/hooks/use-cursor-effect";
 import NotificationSettings from "@/components/NotificationSettings";
 import ProfileEditor from "@/components/ProfileEditor";
 import ActiveTaskAssistant from "@/components/ActiveTaskAssistant";
@@ -18,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
 import CreateNotificationModal from "@/components/notifications/CreateNotificationModal";
 import MyRequests from "@/components/requests/MyRequests";
+import '../styles/dashboard-float.css'; // Floating background shapes
 
 const EmployeeDashboard = () => {
   const { toast } = useToast();
@@ -28,6 +30,14 @@ const EmployeeDashboard = () => {
     error: notificationsError,
     formatDate
   } = useNotifications(); // Get notifications from context
+
+  // Customize cursor effect for this page
+  useCursorEffect({
+    size: 60,
+    color: 'rgba(139, 92, 246, 0.08)', // Lighter purple for dashboard
+    opacity: 0.6,
+    blur: 'xl'
+  }, []);
 
   // State for modals
   const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false);
@@ -170,10 +180,51 @@ const EmployeeDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50/50 via-white to-indigo-50/50">
+    <div className="relative min-h-screen bg-gradient-to-br from-white via-purple-50 to-amber-50 pb-24 overflow-x-hidden">
+      {/* Floating background shapes */}
+      <div className="floating-bg">
+        <div className="floating-shape shape1 animate-float" />
+        <div className="floating-shape shape2 animate-float" />
+        <div className="floating-shape shape3 animate-float" />
+        <div className="floating-shape shape4 animate-float" />
+      </div>
+
       <TopNavigation userRole={user?.role} />
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-2 md:px-10 pt-6 z-10">
+        {/* Dashboard header with chunky card and animation */}
+        <div className="relative mb-10">
+          <div className="relative w-full max-w-4xl mx-auto animate-slide-up animate-grow rounded-[2.5rem] bg-white/60 backdrop-blur-2xl border-2 border-purple-300/40 shadow-[0_8px_32px_0_rgba(124,58,237,0.10)] px-8 py-10 flex flex-col items-center gap-8 overflow-hidden">
+            <img
+              src={user?.profile_picture || '/default-avatar.png'}
+              alt="Profile"
+              className="w-32 h-32 rounded-full border-4 border-purple-300 shadow-2xl object-cover animate-float bg-gradient-to-br from-purple-100/70 to-pink-100/70"
+              style={{ marginTop: '-2rem', boxShadow: '0 8px 32px 0 rgba(168,139,250,0.18)' }}
+            />
+            <div className="flex-1 flex flex-col justify-center items-center min-w-0">
+              <h1 className="text-4xl md:text-5xl font-black text-purple-700 mb-3 tracking-tight drop-shadow-lg animate-slide-right whitespace-nowrap overflow-hidden text-ellipsis text-center">
+                Welcome back, {user?.full_name || 'Employee'}!
+              </h1>
+              <div className="flex flex-wrap justify-center items-center gap-4 mb-3 animate-slide-left">
+                <span className="inline-flex items-center px-4 py-1.5 rounded-xl bg-amber-100/90 text-amber-700 font-bold text-base shadow border border-amber-200/60 animate-pulse-slow">
+                  <User className="w-5 h-5 mr-2" /> {user?.role || 'Employee'}
+                </span>
+                <span className="inline-flex items-center px-4 py-1.5 rounded-xl bg-purple-100/90 text-purple-700 font-bold text-base shadow border border-purple-200/60 animate-pulse-slow">
+                  <Calendar className="w-5 h-5 mr-2" /> Joined: {user?.created_at ? formatJoinDate(user.created_at) : '---'}
+                </span>
+                <span className="inline-flex items-center px-4 py-1.5 rounded-xl bg-blue-100/90 text-blue-700 font-bold text-base shadow border border-blue-200/60 animate-pulse-slow">
+                  <ClipboardList className="w-5 h-5 mr-2" /> Tasks: {tasks.length}
+                </span>
+                <span className="inline-flex items-center px-4 py-1.5 rounded-xl bg-green-100/90 text-green-700 font-bold text-base shadow border border-green-200/60 animate-pulse-slow">
+                  <Clock className="w-5 h-5 mr-2" /> Upcoming: {upcomingDeadlinesCount}
+                </span>
+              </div>
+              <p className="text-gray-700 font-semibold text-lg animate-slide-up bg-white/60 rounded-xl px-4 py-2 shadow border border-purple-100/40 text-center">
+                Stay productive and keep track of your performance, tasks, and notifications below!
+              </p>
+            </div>
+          </div>
+        </div>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2 text-gradient animate-fade-in">Employee Dashboard</h1>
@@ -812,6 +863,12 @@ const EmployeeDashboard = () => {
         </Tabs>
       </main>
 
+      {/* Decorative floating elements for extra visual pop (foreground, non-interactive) */}
+      <div className="pointer-events-none fixed inset-0 z-10">
+        <div className="absolute left-10 top-1/3 w-12 h-12 bg-purple-300/40 rounded-full animate-float blur-2xl" style={{animationDuration:'7s'}} />
+        <div className="absolute right-16 top-1/4 w-16 h-16 bg-amber-300/30 rounded-full animate-float blur-2xl" style={{animationDuration:'8s', animationDelay:'1s'}} />
+        <div className="absolute left-1/2 bottom-20 w-20 h-20 bg-blue-300/30 rounded-full animate-float blur-2xl" style={{animationDuration:'6s', animationDelay:'2s'}} />
+      </div>
       {/* Modal components */}
       <NotificationSettings
         open={notificationSettingsOpen}
@@ -829,7 +886,7 @@ const EmployeeDashboard = () => {
       />
     </div>
   );
-};
+};  
 
 export default EmployeeDashboard;
 

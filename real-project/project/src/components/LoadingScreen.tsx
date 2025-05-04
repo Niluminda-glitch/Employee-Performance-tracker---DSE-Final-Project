@@ -29,21 +29,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
 
   const [message, setMessage] = useState(text);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
-  const [mousePosition, setMousePosition] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
   const [progress, setProgress] = useState(0);
-
-  // Track mouse position for cursor-responsive animations
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
 
   // Change message every 3 seconds for a dynamic feel
   useEffect(() => {
@@ -122,15 +108,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
           }}
         />
 
-        {/* Cursor-responsive glow */}
-        <motion.div
-          className="fixed w-40 h-40 rounded-full bg-purple-400/10 mix-blend-multiply filter blur-xl pointer-events-none"
-          style={{
-            left: mousePosition.x - 80,
-            top: mousePosition.y - 80,
-            opacity: 0.5
-          }}
-        />
+
 
         {/* Animated particles */}
         {[...Array(15)].map((_, i) => (
