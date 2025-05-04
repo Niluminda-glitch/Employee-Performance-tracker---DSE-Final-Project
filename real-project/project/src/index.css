@@ -1,0 +1,430 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Base colors */
+    --background: 260 50% 99%;
+    --foreground: 222.2 84% 4.9%;
+
+    /* Card colors */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    /* Popover colors */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    /* Primary colors */
+    --primary: 267 75% 60%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary colors */
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 267 75% 60%;
+
+    /* Muted colors */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    /* Accent colors */
+    --accent: 267 75% 95%;
+    --accent-foreground: 267 75% 60%;
+
+    /* Destructive colors */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Border colors */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 267 75% 60%;
+
+    /* Radius */
+    --radius: 0.75rem;
+
+    /* Sidebar colors */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans text-sm;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
+  }
+  
+  html {
+    @apply scroll-smooth;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+
+  h1 {
+    @apply text-2xl md:text-3xl font-bold;
+  }
+
+  h2 {
+    @apply text-xl md:text-2xl font-semibold;
+  }
+
+  h3 {
+    @apply text-lg md:text-xl font-semibold;
+  }
+
+  h4 {
+    @apply text-base md:text-lg font-semibold;
+  }
+
+  h5 {
+    @apply text-sm md:text-base font-medium;
+  }
+
+  h6 {
+    @apply text-xs md:text-sm font-medium;
+  }
+}
+
+@layer components {
+  /* Glass Card Components */
+  .card-glass {
+    @apply backdrop-blur-md bg-white/90 border border-white/30 shadow-elevation-2;
+  }
+  
+  /* Card Hover Effect */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-elevation-3 hover:-translate-y-1;
+  }
+  
+  /* Card with Gradient Background */
+  .card-gradient {
+    @apply bg-gradient-to-br from-white to-purple-50/50;
+  }
+  
+  /* Enhanced Card Gradient */
+  .card-gradient-enhanced {
+    @apply bg-gradient-to-br from-white via-purple-50/20 to-indigo-50/30 border border-white/80 shadow-elevation-2;
+  }
+  
+  /* Button with Gradient Background */
+  .btn-gradient {
+    @apply bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 
+           transition-all text-white hover:shadow-glow-primary;
+  }
+  
+  /* Text with Gradient */
+  .text-gradient {
+    @apply bg-gradient-to-br from-purple-700 via-indigo-700 to-purple-700 bg-clip-text text-transparent;
+  }
+  
+  /* Enhanced Text Gradient */
+  .text-gradient-enhanced {
+    @apply bg-gradient-to-br from-purple-800 via-indigo-700 to-purple-600 bg-clip-text text-transparent;
+  }
+  
+  /* NavItem Styling */
+  .nav-item {
+    @apply rounded-xl px-3 py-2 text-sm font-medium transition-colors hover:bg-accent 
+           hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground 
+           focus:outline-none disabled:pointer-events-none disabled:opacity-50 
+           data-[active]:bg-accent/50 data-[state=open]:bg-accent/50;
+  }
+  
+  /* Active NavItem Styling */
+  .nav-item-active {
+    @apply bg-accent/80 text-accent-foreground font-semibold;
+  }
+  
+  /* Status Badge Base */
+  .status-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors;
+  }
+  
+  /* Status Badge Variants */
+  .status-badge-pending {
+    @apply bg-warning-muted text-warning-emphasis;
+  }
+  
+  .status-badge-in-progress {
+    @apply bg-info-muted text-info-emphasis;
+  }
+  
+  .status-badge-completed {
+    @apply bg-success-muted text-success-emphasis;
+  }
+
+  /* Enhanced Button */
+  .btn-enhanced {
+    @apply rounded-xl font-medium transition-all duration-200 
+           active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  /* Glow effects for elements */
+  .glow-primary {
+    @apply shadow-glow-primary;
+  }
+
+  .glow-success {
+    @apply shadow-glow-success;
+  }
+
+  .glow-info {
+    @apply shadow-glow-info;
+  }
+
+  .glow-warning {
+    @apply shadow-glow-warning;
+  }
+
+  .glow-danger {
+    @apply shadow-glow-danger;
+  }
+
+  /* Glass panels */
+  .panel-glass {
+    @apply backdrop-blur-md bg-white/75 border border-white/50 shadow-glass;
+  }
+
+  /* Gradient Outline Utilities */
+  .outline-gradient-purple {
+    @apply outline-purple-200/50 
+           bg-gradient-to-r from-purple-200/30 via-purple-100/20 to-purple-200/30;
+    outline-style: solid;
+  }
+
+  .outline-gradient-purple-intense {
+    @apply outline-purple-300/70 
+           bg-gradient-to-r from-purple-300/40 via-purple-200/30 to-purple-300/40;
+    outline-style: solid;
+  }
+}
+
+@layer utilities {
+  /* Animation Utilities */
+  .animate-spin-slow {
+    animation: spin 3s linear infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+  
+  .animate-slide-in-right {
+    animation: slideInRight 0.5s ease-out forwards;
+  }
+  
+  .animate-slide-in-left {
+    animation: slideInLeft 0.5s ease-out forwards;
+  }
+
+  .animate-bounce-in {
+    animation: bounceIn 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-scale {
+    animation: scale 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+  }
+
+  .animate-shimmer {
+    @apply bg-shimmer bg-[length:400%_100%];
+    animation: shimmer 3s infinite;
+  }
+  
+  /* Animation Delays */
+  .animate-delay-100 {
+    animation-delay: 100ms;
+  }
+  
+  .animate-delay-200 {
+    animation-delay: 200ms;
+  }
+  
+  .animate-delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .animate-delay-400 {
+    animation-delay: 400ms;
+  }
+  
+  .animate-delay-500 {
+    animation-delay: 500ms;
+  }
+
+  /* Gradients */
+  .bg-mesh-gradient {
+    @apply bg-gradient-radial from-purple-100/50 via-purple-50/25 to-transparent;
+  }
+
+  .bg-soft-gradient {
+    @apply bg-gradient-to-br from-white via-purple-50/10 to-indigo-50/20;
+  }
+
+  .bg-subtle-pattern {
+    background-color: #ffffff;
+    background-image: radial-gradient(#c084fc 0.5px, transparent 0.5px), radial-gradient(#c084fc 0.5px, #ffffff 0.5px);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    opacity: 0.05;
+  }
+
+  /* Glow effects for elements */
+  .shadow-glow-purple {
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.3), 
+                0 0 25px rgba(168, 85, 247, 0.2);
+  }
+
+  /* Keyframes Definitions */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideInRight {
+    from {
+      transform: translateX(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideInLeft {
+    from {
+      transform: translateX(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes bounceIn {
+    0% {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    70% {
+      transform: scale(1.05);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  
+  @keyframes float {
+    0% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+    100% {
+      transform: translateY(0px);
+    }
+  }
+  
+  @keyframes scale {
+    from {
+      transform: scale(0);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+}

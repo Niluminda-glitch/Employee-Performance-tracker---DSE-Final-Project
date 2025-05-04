@@ -1,0 +1,399 @@
+-- Enable UUID generation extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Create ENUM Types (if they don't exist)
+DO $$ BEGIN CREATE TYPE public.user_role AS ENUM ('employee', 'supervisor', 'manager'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE public.user_status AS ENUM ('active', 'inactive', 'first_login'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE public.skill_proficiency AS ENUM ('learning', 'proficient', 'expert'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE public.task_status AS ENUM ('pending', 'in-progress', 'completed'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE public.task_priority AS ENUM ('low', 'medium', 'high'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE public.notification_type AS ENUM ('system', 'task_assigned', 'task_completed', 'deadline_reminder', 'mentorship_request', 'request_approved', 'request_rejected', 'announcement', 'request_submitted'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE public.mentorship_status AS ENUM ('pending', 'accepted', 'rejected'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE public.request_type AS ENUM ('leave', 'overtime'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE public.request_status AS ENUM ('pending', 'approved', 'rejected'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+-- Create Tables with All Columns Included
+CREATE TABLE IF NOT EXISTS public.departments (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name text UNIQUE NOT NULL,
+  "createdAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL,
+  "updatedAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+COMMENT ON TABLE public.departments IS 'Stores department information';
+
+CREATE TABLE IF NOT EXISTS public.users (
+  id uuid PRIMARY KEY NOT NULL,
+  email text UNIQUE NOT NULL,
+  full_name text,
+  role user_role NOT NULL DEFAULT 'employee',
+  status user_status NOT NULL DEFAULT 'first_login',
+  department_id uuid REFERENCES public.departments(id) ON DELETE SET NULL,
+  supervisor_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  avatar_url text,
+  password text NOT NULL,
+  job_title text,
+  google_id text UNIQUE,
+  "createdAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL,
+  "updatedAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+COMMENT ON TABLE public.users IS 'Stores public user profile information (and password hash for custom auth)';
+COMMENT ON COLUMN public.users.id IS 'Should match the ID from the primary authentication system/table if separate';
+COMMENT ON COLUMN public.users.password IS 'Stores the hashed password for custom authentication';
+COMMENT ON COLUMN public.users.job_title IS 'Stores the job title of the user';
+COMMENT ON COLUMN public.users.google_id IS 'Stores the unique ID from Google Sign-In';
+
+CREATE TABLE IF NOT EXISTS public.skills (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name text UNIQUE NOT NULL,
+  description text,
+  "createdAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL,
+  "updatedAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+COMMENT ON TABLE public.skills IS 'Stores available skills in the organization';
+
+CREATE TABLE IF NOT EXISTS public.user_skills (
+  user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  skill_id uuid NOT NULL REFERENCES public.skills(id) ON DELETE CASCADE,
+  proficiency_level skill_proficiency NOT NULL DEFAULT 'learning',
+  willing_to_mentor boolean NOT NULL DEFAULT false,
+  is_certified boolean NOT NULL DEFAULT false,
+  last_certified_date date,
+  is_training boolean NOT NULL DEFAULT false,
+  "createdAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL,
+  "updatedAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL,
+  PRIMARY KEY (user_id, skill_id)
+);
+COMMENT ON TABLE public.user_skills IS 'Associates users with skills and their proficiency/mentorship status';
+
+CREATE TABLE IF NOT EXISTS public.tasks (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title text NOT NULL,
+  description text,
+  assignee_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  supervisor_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  status task_status NOT NULL DEFAULT 'pending',
+  priority task_priority NOT NULL DEFAULT 'medium',
+  due_date date,
+  "createdAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL,
+  "updatedAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+COMMENT ON TABLE public.tasks IS 'Stores task information';
+
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  title text NOT NULL,
+  message text NOT NULL,
+  type notification_type NOT NULL,
+  related_task_id uuid REFERENCES public.tasks(id) ON DELETE SET NULL,
+  related_user_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  is_read boolean NOT NULL DEFAULT false,
+  "createdAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL,
+  "updatedAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+COMMENT ON TABLE public.notifications IS 'Stores user notifications';
+
+CREATE TABLE IF NOT EXISTS public.mentorship_requests (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  requester_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  mentor_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  skill_id uuid NOT NULL REFERENCES public.skills(id) ON DELETE CASCADE,
+  status mentorship_status NOT NULL DEFAULT 'pending',
+  message text,
+  "createdAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL,
+  "updatedAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+COMMENT ON TABLE public.mentorship_requests IS 'Tracks mentorship requests between users for specific skills';
+
+CREATE TABLE IF NOT EXISTS public.operations (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  operation_number text UNIQUE,
+  description text,
+  quality_checkpoints jsonb DEFAULT '[]'::jsonb,
+  smv_target numeric(5, 2),
+  sop_url text,
+  video_url text,
+  "createdAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL,
+  "updatedAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+COMMENT ON TABLE public.operations IS 'Stores details about specific work operations or styles for contextual assistance.';
+COMMENT ON COLUMN public.operations.operation_number IS 'Unique code identifying the operation/style.';
+COMMENT ON COLUMN public.operations.quality_checkpoints IS 'JSON array of objects detailing key quality checks. e.g., [{"icon": "icon-name", "text": "Description"}]';
+COMMENT ON COLUMN public.operations.smv_target IS 'Standard Minute Value (target time per unit) for this operation.';
+COMMENT ON COLUMN public.operations.sop_url IS 'Link to the Standard Operating Procedure document.';
+COMMENT ON COLUMN public.operations.video_url IS 'Link to an instructional video.';
+
+CREATE TABLE IF NOT EXISTS public.requests (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  type request_type NOT NULL,
+  start_date date NOT NULL,
+  end_date date NOT NULL,
+  hours integer,
+  reason text NOT NULL,
+  status request_status NOT NULL DEFAULT 'pending',
+  approver_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  "createdAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL,
+  "updatedAt" timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+COMMENT ON TABLE public.requests IS 'Stores leave and overtime requests from employees';
+
+-- Create Indices
+CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
+CREATE INDEX IF NOT EXISTS idx_users_department_id ON public.users(department_id);
+CREATE INDEX IF NOT EXISTS idx_users_supervisor_id ON public.users(supervisor_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
+CREATE INDEX IF NOT EXISTS idx_tasks_assignee_id ON public.tasks(assignee_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_supervisor_id ON public.tasks(supervisor_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON public.tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON public.tasks(due_date);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id_read ON public.notifications(user_id, is_read);
+CREATE INDEX IF NOT EXISTS idx_mentorship_requests_requester_id ON public.mentorship_requests(requester_id);
+CREATE INDEX IF NOT EXISTS idx_mentorship_requests_mentor_id ON public.mentorship_requests(mentor_id);
+CREATE INDEX IF NOT EXISTS idx_mentorship_requests_status ON public.mentorship_requests(status);
+CREATE INDEX IF NOT EXISTS idx_operations_operation_number ON public.operations(operation_number);
+CREATE INDEX IF NOT EXISTS idx_requests_user_id ON public.requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_requests_status ON public.requests(status);
+CREATE INDEX IF NOT EXISTS idx_requests_type ON public.requests(type);
+
+-- Function to Update "updatedAt" Column
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+   IF row(NEW.*) IS DISTINCT FROM row(OLD.*) THEN
+      NEW."updatedAt" = timezone('utc', now());
+   END IF;
+   RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Apply Triggers to All Tables with "updatedAt"
+CREATE TRIGGER handle_users_updated_at BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER handle_skills_updated_at BEFORE UPDATE ON public.skills FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER handle_departments_updated_at BEFORE UPDATE ON public.departments FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER handle_user_skills_updated_at BEFORE UPDATE ON public.user_skills FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER handle_tasks_updated_at BEFORE UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER handle_notifications_updated_at BEFORE UPDATE ON public.notifications FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER handle_mentorship_requests_updated_at BEFORE UPDATE ON public.mentorship_requests FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER handle_operations_updated_at BEFORE UPDATE ON public.operations FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER handle_requests_updated_at BEFORE UPDATE ON public.requests FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- Data Insertion Statements
+-- Departments
+INSERT INTO public.departments (id, name) VALUES
+('a1b2c3d4-e5f6-7890-1234-567890abcdef', 'Cutting'),
+('b2c3d4e5-f6a7-8901-2345-67890abcdef0', 'Sewing Line A');
+
+-- Users
+INSERT INTO public.users (id, email, full_name, role, status, department_id, password) VALUES
+('c3d4e5f6-a7b8-9012-3456-7890abcdef01', 'alice@emptrack.test', 'Alice Employee', 'employee', 'active', 'b2c3d4e5-f6a7-8901-2345-67890abcdef0', '$2b$10$V1u6lV6Xefh7QjNd1VFE0eA9uH.vD/rC9nMBwv0g7bGgbN1NcGuIS'),
+('d4e5f6a7-b8c9-0123-4567-890abcdef012', 'supervisor@emptrack.test', 'Charlie Supervisor', 'supervisor', 'active', 'b2c3d4e5-f6a7-8901-2345-67890abcdef0', '$2b$10$MwQIXIHTJYjehNRG5cDPMeVFxEUBFZ5HK0i.m3Vpz.BVRpMd7E0u6'),
+('e5f6a7b8-c9d0-1234-5678-90abcdef0123', 'manager@emptrack.test', 'Max Manager', 'manager', 'active', NULL, '$2b$10$F1SeYKbE8zLILRb3TJhe1.zNsdrpWhdkZFSN63mZVPcJ8UTmt0Iie');
+
+UPDATE public.users SET supervisor_id = 'd4e5f6a7-b8c9-0123-4567-890abcdef012' WHERE id = 'c3d4e5f6-a7b8-9012-3456-7890abcdef01';
+
+INSERT INTO public.users (id, email, full_name, role, status, department_id, password) VALUES
+('a3d4e5f6-a7b8-9012-3456-7890abcdef01', 'kavishka@emptrack.test', 'Kavishka Niluminda', 'employee', 'active', 'b2c3d4e5-f6a7-8901-2345-67890abcdef0', 'kavishka');
+
+UPDATE public.users 
+SET password = '$2a$10$8ikir04Qlsu8NQDuGV7dDesVXDObh1L5FXcuh8pn38ftQJQj5njO6' 
+WHERE email = 'kavishka@emptrack.test';
+
+INSERT INTO public.users (id, email, full_name, role, status, password, job_title) VALUES
+(uuid_generate_v4(), 'supervisor@emptrack.test', 'Test Supervisor', 'supervisor', 'active', '$2a$10$4eB94jNjgVvTN3tm2MpnDuZUoekuMUoUXxAwmbMTYRv5xzHLEf..W', 'Line Supervisor'),
+(uuid_generate_v4(), 'manager@emptrack.test', 'Test Manager', 'manager', 'active', '$2a$10$sNWFH.btj6zwiHY4SA18oeYXl4ZX4HzlhusiFsJZ.O08VqVttZ/Qm', 'Factory Manager');
+
+INSERT INTO public.users (id, email, full_name, role, status, password, job_title, supervisor_id, department_id) VALUES
+(uuid_generate_v4(), 'employee1@emptrack.test', 'Alice Employee', 'employee', 'active', '$2a$10$Ht.TUza.rVWBjLRZ5Gg9/.IfbROXQCzZ.PFqYHBLwOIuXKfGcKcXa', 'Stitcher', 'd51f962a-c172-4eba-b65e-d2ba90571d21', NULL),
+(uuid_generate_v4(), 'employee2@emptrack.test', 'Bob Worker', 'employee', 'active', '$2a$10$Ht.TUza.rVWBjLRZ5Gg9/.IfbROXQCzZ.PFqYHBLwOIuXKfGcKcXa', 'Cutter Assistant', 'd51f962a-c172-4eba-b65e-d2ba90571d21', NULL),
+(uuid_generate_v4(), 'employee3@emptrack.test', 'Eva Quality', 'employee', 'active', '$2a$10$Ht.TUza.rVWBjLRZ5Gg9/.IfbROXQCzZ.PFqYHBLwOIuXKfGcKcXa', 'QA Assistant', 'd51f962a-c172-4eba-b65e-d2ba90571d21', NULL);
+
+UPDATE public.users SET supervisor_id = 'd51f962a-c172-4eba-b65e-d2ba90571d21' WHERE id = 'a3d4e5f6-a7b8-9012-3456-7890abcdef01';
+
+-- Skills
+INSERT INTO public.skills (id, name, description) VALUES
+('f6a7b8c9-d0e1-2345-6789-0abcdef01234', 'Lockstitch Operation', 'Operating standard lockstitch sewing machines.'),
+('a7b8c9d0-e1f2-3456-7890-bcdef0123456', 'Fabric Cutting', 'Operating automated or manual fabric cutting equipment.');
+
+INSERT INTO public.skills (id, name, description, "createdAt", "updatedAt") VALUES
+(gen_random_uuid(), 'Overlock/Serger Operation', 'Operating overlock machines for edge finishing and seaming stretch fabrics.', NOW(), NOW()),
+(gen_random_uuid(), 'Coverstitch Operation', 'Operating coverstitch machines for hemming and topstitching knits.', NOW(), NOW()),
+(gen_random_uuid(), 'Buttonhole Machine Operation', 'Operating automated buttonhole machines.', NOW(), NOW()),
+(gen_random_uuid(), 'Button Attachment Machine', 'Operating machines for attaching buttons.', NOW(), NOW()),
+(gen_random_uuid(), 'Bartack Machine Operation', 'Operating bartack machines for reinforcing stress points.', NOW(), NOW()),
+(gen_random_uuid(), 'Flatlock Machine Operation', 'Operating flatlock machines for decorative or functional flat seams.', NOW(), NOW()),
+(gen_random_uuid(), 'Blind Stitch Machine Operation', 'Operating blind stitch machines for invisible hemming.', NOW(), NOW()),
+(gen_random_uuid(), 'Fabric Spreading', 'Laying out multiple plies of fabric accurately for cutting.', NOW(), NOW()),
+(gen_random_uuid(), 'Marker Making', 'Creating efficient cutting layouts (markers), manually or using CAD.', NOW(), NOW()),
+(gen_random_uuid(), 'Plotting', 'Operating plotters to print markers.', NOW(), NOW()),
+(gen_random_uuid(), 'Die Cutting', 'Using die cutting machines for specific shapes.', NOW(), NOW()),
+(gen_random_uuid(), 'Fabric Inspection (Cutting)', 'Identifying fabric flaws before cutting.', NOW(), NOW()),
+(gen_random_uuid(), 'Pattern Making (Manual)', 'Drafting patterns using traditional tools.', NOW(), NOW()),
+(gen_random_uuid(), 'Pattern Making (CAD)', 'Using CAD software (e.g., Lectra, Gerber, Optitex) for pattern creation.', NOW(), NOW()),
+(gen_random_uuid(), 'Pattern Grading', 'Scaling base patterns to different sizes.', NOW(), NOW()),
+(gen_random_uuid(), 'Draping', 'Creating patterns by draping fabric on a dress form.', NOW(), NOW()),
+(gen_random_uuid(), 'Technical Sketching', 'Creating detailed flat sketches for production.', NOW(), NOW()),
+(gen_random_uuid(), 'Tech Pack Creation', 'Developing comprehensive technical packages for manufacturing.', NOW(), NOW()),
+(gen_random_uuid(), 'Garment Pressing/Ironing', 'Using industrial irons and presses for finishing.', NOW(), NOW()),
+(gen_random_uuid(), 'Steam Tunnel Operation', 'Using steam tunnels for wrinkle removal.', NOW(), NOW()),
+(gen_random_uuid(), 'Folding & Bagging', 'Preparing finished garments for shipping.', NOW(), NOW()),
+(gen_random_uuid(), 'Label & Tag Attachment', 'Attaching brand labels, care labels, and hang tags.', NOW(), NOW()),
+(gen_random_uuid(), 'Spot Cleaning', 'Removing stains or marks from finished garments.', NOW(), NOW()),
+(gen_random_uuid(), 'Trimming Threads', 'Cleaning loose threads from garments.', NOW(), NOW()),
+(gen_random_uuid(), 'Stitch Quality Inspection', 'Evaluating seam quality, tension, and consistency.', NOW(), NOW()),
+(gen_random_uuid(), 'Measurement Checking', 'Verifying garment dimensions against specifications.', NOW(), NOW()),
+(gen_random_uuid(), 'Fabric Quality Control', 'Identifying fabric defects like holes, stains, or inconsistencies.', NOW(), NOW()),
+(gen_random_uuid(), 'Inline Quality Checking (Sewing)', 'Inspecting garments during the sewing process.', NOW(), NOW()),
+(gen_random_uuid(), 'Final Quality Inspection (AQL)', 'Performing Acceptable Quality Limit inspections on finished goods.', NOW(), NOW()),
+(gen_random_uuid(), 'Color Matching', 'Assessing color consistency across garments and batches.', NOW(), NOW()),
+(gen_random_uuid(), 'Embroidery Machine Operation', 'Operating single or multi-head embroidery machines.', NOW(), NOW()),
+(gen_random_uuid(), 'Screen Printing', 'Applying designs using screen printing techniques.', NOW(), NOW()),
+(gen_random_uuid(), 'Heat Transfer Application', 'Applying heat transfers or vinyl graphics.', NOW(), NOW()),
+(gen_random_uuid(), 'Garment Dyeing', 'Operating garment染色设备.', NOW(), NOW()),
+(gen_random_uuid(), 'Laser Cutting/Engraving (Textiles)', 'Using laser machines for cutting or etching fabric.', NOW(), NOW()),
+(gen_random_uuid(), 'Pleating', 'Creating pleats using specialized equipment or manually.', NOW(), NOW()),
+(gen_random_uuid(), 'Seam Sealing', 'Applying waterproof tape to seams.', NOW(), NOW()),
+(gen_random_uuid(), 'Knit Fabric Handling', 'Specific techniques for working with stretchy knit fabrics.', NOW(), NOW()),
+(gen_random_uuid(), 'Woven Fabric Handling', 'Specific techniques for working with stable woven fabrics.', NOW(), NOW()),
+(gen_random_uuid(), 'Leather/Suede Handling', 'Techniques for sewing and handling leather materials.', NOW(), NOW()),
+(gen_random_uuid(), 'Denim Processing', 'Knowledge of washing, finishing, and sewing denim.', NOW(), NOW()),
+(gen_random_uuid(), 'Sewing Machine Basic Maintenance', 'Performing routine cleaning, oiling, and needle changes.', NOW(), NOW()),
+(gen_random_uuid(), 'Sewing Machine Troubleshooting', 'Identifying and resolving common machine issues (tension, timing).', NOW(), NOW())
+ON CONFLICT (name) DO NOTHING;
+
+-- User Skills
+INSERT INTO public.user_skills (user_id, skill_id, proficiency_level, willing_to_mentor) VALUES
+('c3d4e5f6-a7b8-9012-3456-7890abcdef01', 'f6a7b8c9-d0e1-2345-6789-0abcdef01234', 'proficient', true),
+('d4e5f6a7-b8c9-0123-4567-890abcdef012', 'f6a7b8c9-d0e1-2345-6789-0abcdef01234', 'expert', true),
+('d4e5f6a7-b8c9-0123-4567-890abcdef012', 'a7b8c9d0-e1f2-3456-7890-bcdef0123456', 'learning', false),
+('e5f6a7b8-c9d0-1234-5678-90abcdef0123', 'f6a7b8c9-d0e1-2345-6789-0abcdef01234', 'learning', false);
+
+DO $$
+DECLARE
+    v_supervisor_id UUID := 'd51f962a-c172-4eba-b65e-d2ba90571d21';
+    v_password_hash TEXT := '$2b$10$ZYt6rNt7HJ
+
+7azlxh2fCFmeU8BVFEveLwfJmDDskLhjk3MU8.CGo0O';
+    v_user_id UUID;
+    v_skill_lockstitch UUID := 'f6a7b8c9-d0e1-2345-6789-0abcdef01234';
+    v_skill_cutting UUID := 'a7b8c9d0-e1f2-3456-7890-bcdef0123456';
+    v_skill_spreading UUID := (SELECT id FROM public.skills WHERE name = 'Fabric Spreading');
+    v_skill_pattern_cad UUID := (SELECT id FROM public.skills WHERE name = 'Pattern Making (CAD)');
+    v_skill_pattern_manual UUID := (SELECT id FROM public.skills WHERE name = 'Pattern Making (Manual)');
+    v_skill_qc_stitch UUID := (SELECT id FROM public.skills WHERE name = 'Stitch Quality Inspection');
+    v_skill_qc_fabric UUID := (SELECT id FROM public.skills WHERE name = 'Fabric Quality Control');
+    v_skill_pressing UUID := (SELECT id FROM public.skills WHERE name = 'Garment Pressing/Ironing');
+    v_skill_overlock UUID := (SELECT id FROM public.skills WHERE name = 'Overlock/Serger Operation');
+    v_skill_button_attach UUID := (SELECT id FROM public.skills WHERE name = 'Button Attachment Machine');
+    v_skill_embroidery UUID := (SELECT id FROM public.skills WHERE name = 'Embroidery Machine Operation');
+    v_skill_maint_basic UUID := (SELECT id FROM public.skills WHERE name = 'Sewing Machine Basic Maintenance');
+    v_skill_grading UUID := (SELECT id FROM public.skills WHERE name = 'Pattern Grading');
+    v_skill_tech_pack UUID := (SELECT id FROM public.skills WHERE name = 'Tech Pack Creation');
+BEGIN
+    INSERT INTO public.users (id, email, full_name, password, role, status, job_title, supervisor_id) 
+    VALUES (gen_random_uuid(), 'employee1@emptrack.test', 'Maya Patel', v_password_hash, 'employee', 'first_login', 'Senior Sewing Operator', v_supervisor_id)
+    ON CONFLICT (email) DO NOTHING RETURNING id INTO v_user_id;
+    IF v_user_id IS NOT NULL THEN
+      INSERT INTO public.user_skills (user_id, skill_id, willing_to_mentor) VALUES
+        (v_user_id, v_skill_lockstitch, true), (v_user_id, v_skill_overlock, false), (v_user_id, v_skill_button_attach, false)
+      ON CONFLICT (user_id, skill_id) DO NOTHING;
+    END IF;
+
+    INSERT INTO public.users (id, email, full_name, password, role, status, job_title, supervisor_id) 
+    VALUES (gen_random_uuid(), 'employee2@emptrack.test', 'David Rodriguez', v_password_hash, 'employee', 'first_login', 'Fabric Cutter', v_supervisor_id)
+    ON CONFLICT (email) DO NOTHING RETURNING id INTO v_user_id;
+    IF v_user_id IS NOT NULL THEN
+      INSERT INTO public.user_skills (user_id, skill_id, willing_to_mentor) VALUES
+        (v_user_id, v_skill_cutting, true), (v_user_id, v_skill_spreading, true)
+      ON CONFLICT (user_id, skill_id) DO NOTHING;
+    END IF;
+
+    INSERT INTO public.users (id, email, full_name, password, role, status, job_title, supervisor_id) 
+    VALUES (gen_random_uuid(), 'employee3@emptrack.test', 'Aisha Khan', v_password_hash, 'employee', 'first_login', 'Quality Inspector', v_supervisor_id)
+    ON CONFLICT (email) DO NOTHING RETURNING id INTO v_user_id;
+    IF v_user_id IS NOT NULL THEN
+      INSERT INTO public.user_skills (user_id, skill_id, willing_to_mentor) VALUES
+        (v_user_id, v_skill_qc_stitch, true), (v_user_id, v_skill_qc_fabric, true), (v_user_id, v_skill_pressing, false)
+      ON CONFLICT (user_id, skill_id) DO NOTHING;
+    END IF;
+
+    INSERT INTO public.users (id, email, full_name, password, role, status, job_title, supervisor_id) 
+    VALUES (gen_random_uuid(), 'employee4@emptrack.test', 'Ben Carter', v_password_hash, 'employee', 'first_login', 'Pattern Maker', v_supervisor_id)
+    ON CONFLICT (email) DO NOTHING RETURNING id INTO v_user_id;
+    IF v_user_id IS NOT NULL THEN
+      INSERT INTO public.user_skills (user_id, skill_id, willing_to_mentor) VALUES
+        (v_user_id, v_skill_pattern_manual, true), (v_user_id, v_skill_pattern_cad, true), (v_user_id, v_skill_grading, false)
+      ON CONFLICT (user_id, skill_id) DO NOTHING;
+    END IF;
+
+    INSERT INTO public.users (id, email, full_name, password, role, status, job_title, supervisor_id) 
+    VALUES (gen_random_uuid(), 'employee5@emptrack.test', 'Chloe Dubois', v_password_hash, 'employee', 'first_login', 'Finishing Specialist', v_supervisor_id)
+    ON CONFLICT (email) DO NOTHING RETURNING id INTO v_user_id;
+    IF v_user_id IS NOT NULL THEN
+      INSERT INTO public.user_skills (user_id, skill_id, willing_to_mentor) VALUES
+        (v_user_id, v_skill_pressing, true), (v_user_id, v_skill_qc_stitch, false)
+      ON CONFLICT (user_id, skill_id) DO NOTHING;
+    END IF;
+
+    INSERT INTO public.users (id, email, full_name, password, role, status, job_title, supervisor_id) 
+    VALUES (gen_random_uuid(), 'employee6@emptrack.test', 'Kenji Tanaka', v_password_hash, 'employee', 'first_login', 'Embroidery Operator', v_supervisor_id)
+    ON CONFLICT (email) DO NOTHING RETURNING id INTO v_user_id;
+    IF v_user_id IS NOT NULL THEN
+      INSERT INTO public.user_skills (user_id, skill_id, willing_to_mentor) VALUES
+        (v_user_id, v_skill_embroidery, true), (v_user_id, v_skill_lockstitch, false)
+      ON CONFLICT (user_id, skill_id) DO NOTHING;
+    END IF;
+
+    INSERT INTO public.users (id, email, full_name, password, role, status, job_title, supervisor_id) 
+    VALUES (gen_random_uuid(), 'employee7@emptrack.test', 'Sofia Petrova', v_password_hash, 'employee', 'first_login', 'Sewing Technician', v_supervisor_id)
+    ON CONFLICT (email) DO NOTHING RETURNING id INTO v_user_id;
+    IF v_user_id IS NOT NULL THEN
+      INSERT INTO public.user_skills (user_id, skill_id, willing_to_mentor) VALUES
+        (v_user_id, v_skill_maint_basic, true), (v_user_id, v_skill_lockstitch, false), (v_user_id, v_skill_overlock, true)
+      ON CONFLICT (user_id, skill_id) DO NOTHING;
+    END IF;
+
+    INSERT INTO public.users (id, email, full_name, password, role, status, job_title, supervisor_id) 
+    VALUES (gen_random_uuid(), 'employee8@emptrack.test', 'Liam OConnell', v_password_hash, 'employee', 'first_login', 'Production Trainee', v_supervisor_id)
+    ON CONFLICT (email) DO NOTHING RETURNING id INTO v_user_id;
+    IF v_user_id IS NOT NULL THEN
+      INSERT INTO public.user_skills (user_id, skill_id, willing_to_mentor) VALUES
+        (v_user_id, v_skill_lockstitch, false)
+      ON CONFLICT (user_id, skill_id) DO NOTHING;
+    END IF;
+
+    INSERT INTO public.users (id, email, full_name, password, role, status, job_title, supervisor_id) 
+    VALUES (gen_random_uuid(), 'employee9@emptrack.test', 'Fatima Ahmed', v_password_hash, 'employee', 'first_login', 'Technical Designer', v_supervisor_id)
+    ON CONFLICT (email) DO NOTHING RETURNING id INTO v_user_id;
+    IF v_user_id IS NOT NULL THEN
+      INSERT INTO public.user_skills (user_id, skill_id, willing_to_mentor) VALUES
+        (v_user_id, v_skill_tech_pack, true), (v_user_id, v_skill_pattern_cad, false)
+      ON CONFLICT (user_id, skill_id) DO NOTHING;
+    END IF;
+
+    INSERT INTO public.users (id, email, full_name, password, role, status, job_title, supervisor_id) 
+    VALUES (gen_random_uuid(), 'employee10@emptrack.test', 'Noah Williams', v_password_hash, 'employee', 'first_login', 'Utility Operator', v_supervisor_id)
+    ON CONFLICT (email) DO NOTHING RETURNING id INTO v_user_id;
+    IF v_user_id IS NOT NULL THEN
+      INSERT INTO public.user_skills (user_id, skill_id, willing_to_mentor) VALUES
+        (v_user_id, v_skill_lockstitch, false), (v_user_id, v_skill_overlock, false), (v_user_id, v_skill_button_attach, false)
+      ON CONFLICT (user_id, skill_id) DO NOTHING;
+    END IF;
+END $$;
+
+-- Tasks
+INSERT INTO public.tasks (id, title, description, assignee_id, supervisor_id, status, priority, due_date) VALUES
+(uuid_generate_v4(), 'Prepare Monthly Sales Report', 'Compile and summarize the sales data for April.', (SELECT id FROM public.users WHERE email = 'kavishka@emptrack.test'), (SELECT id FROM public.users WHERE email = 'supervisor@emptrack.test'), 'pending', 'medium', '2025-05-05'),
+(uuid_generate_v4(), 'Update Employee Records', 'Ensure all employee information is current in the HR system.', (SELECT id FROM public.users WHERE email = 'kavishka@emptrack.test'), (SELECT id FROM public.users WHERE email = 'supervisor@emptrack.test'), 'pending', 'high', '2025-05-12'),
+(uuid_generate_v4(), 'Organize Team Meeting', 'Set up a meeting to discuss Q2 goals and plans.', (SELECT id FROM public.users WHERE email = 'kavishka@emptrack.test'), (SELECT id FROM public.users WHERE email = 'supervisor@emptrack.test'), 'pending', 'low', '2025-05-08'),
+(uuid_generate_v4(), 'Prepare Cut Fabric for Style ABC', 'Bundle 50 units of main body pieces.', (SELECT id FROM public.users WHERE email = 'employee1@emptrack.test'), (SELECT id FROM public.users WHERE email = 'supervisor@emptrack.test'), 'pending', 'high', '2025-05-10'),
+(uuid_generate_v4(), 'Inspect Stitching Quality - Line A', 'Perform hourly checks on 10 random garments.', (SELECT id FROM public.users WHERE email = 'employee2@emptrack.test'), (SELECT id FROM public.users WHERE email = 'supervisor@emptrack.test'), 'in-progress', 'medium', NULL),
+(uuid_generate_v4(), 'Review Production Schedule', 'Update the production schedule for next week.', (SELECT id FROM public.users WHERE email = 'employee3@emptrack.test'), (SELECT id FROM public.users WHERE email = 'supervisor@emptrack.test'), 'pending', 'low', '2025-05-15'),
+(uuid_generate_v4(), 'Quality Check - Finished Products', 'Perform final quality check on finished products.', (SELECT id FROM public.users WHERE email = 'employee1@emptrack.test'), (SELECT id FROM public.users WHERE email = 'supervisor@emptrack.test'), 'completed', 'high', '2025-05-05');
+
+-- Operations
+INSERT INTO public.operations (id, name, operation_number, quality_checkpoints, smv_target, sop_url) VALUES
+(uuid_generate_v4(), 'Pocket Setting - Style 45A', 'OP-101', '[{"icon":"ruler", "text":"Verify placement +/- 2mm"}, {"icon":"stitch", "text":"Ensure straight top stitch"}, {"icon":"clean", "text":"Check for oil spots"}]', 1.15, 'https://example.com/sops/style45a-pocket.pdf'),
+(uuid_generate_v4(), 'Sleeve Attachment - Style 45A', 'OP-105', '[{"icon":"align", "text":"Match notches accurately"}, {"icon":"stitch", "text":"No puckering at curve"}, {"icon":"scissors", "text":"Trim threads inside"}]', 2.50, 'https://example.com/sops/style45a-sleeve.mp4'),
+(uuid_generate_v4(), 'Collar Topstitch - Style 88B', 'OP-210', '[{"icon":"stitch", "text":"Maintain even stitch margin (3mm)"}, {"icon":"symmetry", "text":"Check point symmetry"}, {"icon":"clean", "text":"Press collar flat, no shine"}]', 0.90, 'https://example.com/sops/style88b-collar.pdf');

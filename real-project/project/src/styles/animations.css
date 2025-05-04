@@ -1,0 +1,133 @@
+/* Custom animation styles to enhance AOS and Framer Motion */
+
+/* Add a subtle glow effect to cards when they animate in */
+[data-aos="fade-up"] {
+  transform: translate3d(0, 50px, 0);
+}
+
+[data-aos="fade-up"].aos-animate {
+  transform: translate3d(0, 0, 0);
+  box-shadow: 0 0 15px rgba(129, 140, 248, 0.1);
+}
+
+/* Make zoom animations more dramatic */
+[data-aos="zoom-in"] {
+  transform: scale(0.6);
+}
+
+[data-aos="zoom-in"].aos-animate {
+  transform: scale(1);
+}
+
+/* Create a nice bounce effect */
+[data-aos="bounce"] {
+  transform: translate3d(0, 20px, 0);
+  transition-timing-function: cubic-bezier(0.5, 0, 0.3, 1.5) !important;
+}
+
+[data-aos="bounce"].aos-animate {
+  transform: translate3d(0, 0, 0);
+}
+
+/* Progress bars special animation */
+.progress-bar-animate {
+  width: 0 !important;
+  transition: width 1.5s ease-out !important;
+}
+
+.progress-bar-animate.aos-animate {
+  width: var(--progress-width) !important;
+}
+
+/* Card hover effects */
+.card-hover-effect {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Staggered list items animation */
+.stagger-item {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.stagger-list.aos-animate .stagger-item:nth-child(1) {
+  animation: fadeInUp 0.5s 0.1s forwards;
+}
+
+.stagger-list.aos-animate .stagger-item:nth-child(2) {
+  animation: fadeInUp 0.5s 0.2s forwards;
+}
+
+.stagger-list.aos-animate .stagger-item:nth-child(3) {
+  animation: fadeInUp 0.5s 0.3s forwards;
+}
+
+.stagger-list.aos-animate .stagger-item:nth-child(4) {
+  animation: fadeInUp 0.5s 0.4s forwards;
+}
+
+.stagger-list.aos-animate .stagger-item:nth-child(5) {
+  animation: fadeInUp 0.5s 0.5s forwards;
+}
+
+.stagger-list.aos-animate .stagger-item:nth-child(n+6) {
+  animation: fadeInUp 0.5s 0.6s forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Add pulse effect to important numbers */
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Flip card animation */
+.flip-card {
+  perspective: 1000px;
+}
+
+.flip-card-inner {
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.flip-card:hover .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front, .flip-card-back {
+  backface-visibility: hidden;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+}
