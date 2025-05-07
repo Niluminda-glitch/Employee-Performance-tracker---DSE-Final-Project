@@ -1,0 +1,75 @@
+/* Enhanced Analytics Styles */
+
+/* Card Gradient */
+.card-gradient-enhanced {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+}
+
+/* Text Gradient */
+.text-gradient-enhanced {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+
+/* Shadow Elevations */
+.shadow-elevation-1 {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.shadow-elevation-2 {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.shadow-elevation-3 {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+}
+
+/* Subtle Shadow */
+.shadow-subtle {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Glow Effects for Progress Bars */
+.shadow-glow-success {
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+}
+
+.shadow-glow-info {
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
+}
+
+.shadow-glow-warning {
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+}
+
+.shadow-glow-primary {
+  box-shadow: 0 0 8px rgba(167, 139, 250, 0.5);
+}
+
+.shadow-glow-danger {
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+/* Animation Delays */
+.animate-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animate-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animate-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animate-delay-400 {
+  animation-delay: 400ms;
+}
+
+.animate-delay-500 {
+  animation-delay: 500ms;
+}

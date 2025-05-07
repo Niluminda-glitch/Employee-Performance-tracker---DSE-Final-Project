@@ -3,8 +3,72 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models'); // Adjust path if models folder is elsewhere
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 const router = express.Router();
+
+// Configure Google OAuth Strategy
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL,
+    passReqToCallback: true
+  },
+  async (req, accessToken, refreshToken, profile, done) => {
+    try {
+      console.log('[GoogleStrategy] Google profile:', profile.id, profile.emails[0].value);
+
+      // Check if user exists by google_id or email
+      let user = await User.findOne({
+        where: {
+          [User.sequelize.Op.or]: [
+            { google_id: profile.id },
+            { email: profile.emails[0].value }
+          ]
+        }
+      });
+
+      if (!user) {
+        // Create new user if not exists
+        console.log('[GoogleStrategy] Creating new user from Google profile');
+        user = await User.create({
+          email: profile.emails[0].value,
+          full_name: profile.displayName,
+          google_id: profile.id,
+          avatar_url: profile.photos[0]?.value,
+          status: 'active',
+          role: 'employee' // Default role
+        });
+      } else if (!user.google_id) {
+        // Update existing user with Google ID if they signed up with email/password
+        console.log('[GoogleStrategy] Updating existing user with Google ID');
+        user.google_id = profile.id;
+        user.avatar_url = profile.photos[0]?.value || user.avatar_url;
+        await user.save();
+      }
+
+      return done(null, user);
+    } catch (error) {
+      console.error('[GoogleStrategy] Error:', error);
+      return done(error, null);
+    }
+  }
+));
+
+// Serialize and deserialize user
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findByPk(id);
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
+});
 
 // --- Login Route ---
 // POST /api/auth/login
@@ -214,6 +278,65 @@ router.post('/first-time-setup', async (req, res) => {
     } catch (error) {
         console.error('First-time setup process error:', error);
         res.status(500).json({ message: 'Server error during first-time setup attempt' });
+    }
+});
+
+// --- Google OAuth Routes ---
+// GET /api/auth/google
+router.get('/google', passport.authenticate('google', {
+    scope: ['profile', 'email']
+}));
+
+// GET /api/auth/google/callback
+router.get('/google/callback', passport.authenticate('google', { session: false }), (req, res) => {
+    try {
+        // Generate JWT token
+        const payload = {
+            user: {
+                id: req.user.id,
+                role: req.user.role
+            }
+        };
+
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+            console.error("FATAL ERROR: JWT_SECRET is not defined.");
+            return res.status(500).send("Server configuration error");
+        }
+
+        jwt.sign(
+            payload,
+            secret,
+            { expiresIn: '1h' },
+            (err, token) => {
+                if (err) {
+                    console.error('Error signing JWT:', err);
+                    return res.redirect('/auth?error=token_error');
+                }
+
+                // Redirect to frontend with token
+                console.log(`Google login successful for user ID: ${req.user.id}, email: ${req.user.email}`);
+
+                // Create a URL-safe base64 encoded token
+                const encodedToken = Buffer.from(JSON.stringify({
+                    token,
+                    user: {
+                        id: req.user.id,
+                        email: req.user.email,
+                        full_name: req.user.full_name,
+                        role: req.user.role,
+                        status: req.user.status,
+                        avatar_url: req.user.avatar_url
+                    }
+                })).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+                // Redirect to frontend auth callback page with the encoded data
+                res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/callback?data=${encodedToken}`);
+            }
+        );
+    } catch (error) {
+        console.error('Google callback error:', error);
+        res.redirect('/auth?error=server_error');
     }
 });
 

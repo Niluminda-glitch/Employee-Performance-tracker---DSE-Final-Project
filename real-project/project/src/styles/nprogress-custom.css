@@ -1,0 +1,23 @@
+/* Make the bar a bit taller and add a nice gradient */
+#nprogress .bar {
+  background: linear-gradient(to right, #7c3aed, #a78bfa);
+  height: 3px;
+}
+
+/* Remove the peg that causes the bar to bounce */
+#nprogress .peg {
+  box-shadow: 0 0 10px #7c3aed, 0 0 5px #7c3aed;
+}
+
+/* Custom styling for the spinner (if you decide to use it) */
+#nprogress .spinner-icon {
+  border-top-color: #7c3aed;
+  border-left-color: #7c3aed;
+}
+
+/* Page transition wrapper styling */
+.page-transition-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+}

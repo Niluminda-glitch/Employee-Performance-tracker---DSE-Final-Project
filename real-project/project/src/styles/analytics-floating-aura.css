@@ -1,0 +1,153 @@
+/* Floating Aura Live Wallpaper for Analytics Page */
+
+/* Base gradient animation */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.analytics-bg-gradient {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 1), rgba(243, 232, 255, 0.9), rgba(237, 233, 254, 1));
+  background-size: 200% 200%;
+  animation: gradient-shift 60s ease-in-out infinite;
+}
+
+/* Floating shapes container */
+.floating-aura-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -10;
+}
+
+/* Floating shape animations */
+@keyframes float-up {
+  0% {
+    transform: translateY(20px) translateX(0px) scale(0.9);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.6;
+  }
+  80% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-30px) translateX(10px) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes float-diagonal {
+  0% {
+    transform: translate(10px, 20px) scale(0.9);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.6;
+  }
+  80% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-20px, -30px) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes float-circle {
+  0% {
+    transform: translate(0, 0) scale(0.9);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.6;
+    transform: translate(10px, -15px) scale(0.95);
+  }
+  50% {
+    transform: translate(15px, 0) scale(1);
+  }
+  80% {
+    opacity: 0.6;
+    transform: translate(10px, 15px) scale(0.95);
+  }
+  100% {
+    transform: translate(0, 0) scale(0.9);
+    opacity: 0;
+  }
+}
+
+.floating-shape {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.7), rgba(196, 181, 253, 0.7));
+  filter: blur(10px);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.floating-shape.circle {
+  border-radius: 50%;
+}
+
+.floating-shape.rounded-square {
+  border-radius: 30%;
+}
+
+.floating-shape.blob {
+  border-radius: 60% 40% 70% 30% / 50% 60% 40% 50%;
+}
+
+.floating-shape.float-up {
+  animation: float-up var(--duration, 20s) ease-in-out var(--delay, 0s) infinite;
+}
+
+.floating-shape.float-diagonal {
+  animation: float-diagonal var(--duration, 25s) ease-in-out var(--delay, 0s) infinite;
+}
+
+.floating-shape.float-circle {
+  animation: float-circle var(--duration, 30s) ease-in-out var(--delay, 0s) infinite;
+}
+
+/* Particle overlay */
+.particles-container {
+  position: absolute;
+  inset: 0;
+  z-index: -9;
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background-color: rgba(167, 139, 250, 0.2);
+  border-radius: 50%;
+  opacity: 0.3;
+}
+
+/* Parallax effect */
+.parallax-layer {
+  will-change: transform;
+  transition: transform 0.1s ease-out;
+}
+
+/* Glow effects */
+.glow-effect {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.4) 0%, rgba(167, 139, 250, 0) 70%);
+  opacity: 0.7;
+  filter: blur(30px);
+  z-index: -8;
+}

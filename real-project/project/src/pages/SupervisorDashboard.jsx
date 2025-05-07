@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import CreateNotificationModal from "@/components/notifications/CreateNotificationModal";
 import TeamRequests from "@/components/requests/TeamRequests";
+import EmployeeProfileCard from "@/components/EmployeeProfileCard";
+import EmployeeTasksCard from "@/components/EmployeeTasksCard";
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -23,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import '../styles/dashboard-float.css'; // Floating background shapes
 
 // Form Handling & Validation
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -93,6 +95,17 @@ const SupervisorDashboard = () => {
 
   // State for notification modal
   const [createNotificationOpen, setCreateNotificationOpen] = useState(false);
+
+  // State for employee profile card
+  const [isProfileCardOpen, setIsProfileCardOpen] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
+
+  // State for employee tasks card
+  const [isTasksCardOpen, setIsTasksCardOpen] = useState(false);
+  const [selectedEmployeeForTasks, setSelectedEmployeeForTasks] = useState({
+    id: null,
+    name: ''
+  });
 
   // --- Form Schema Definition (using Zod) ---
   const taskFormSchema = z.object({
@@ -294,21 +307,60 @@ const SupervisorDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <TopNavigation userRole="supervisor" />
+    <div className="relative min-h-screen bg-gradient-to-br from-white via-purple-50 to-amber-50 pb-24 overflow-x-hidden">
+      {/* Floating background shapes */}
+      <div className="floating-bg">
+        <div className="floating-shape shape1 animate-float" />
+        <div className="floating-shape shape2 animate-float" />
+        <div className="floating-shape shape3 animate-float" />
+        <div className="floating-shape shape4 animate-float" />
+      </div>
+      <TopNavigation userRole={user?.role} />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <h1 className="text-2xl font-bold">Supervisor Dashboard</h1>
-          <div className="mt-4 md:mt-0 flex space-x-2">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setCreateNotificationOpen(true)}
-              className="bg-purple-600 hover:bg-purple-700"
+      <main className="max-w-7xl mx-auto px-2 md:px-10 pt-6 z-10">
+        {/* Dashboard header with chunky card and animation */}
+        <div className="relative mb-10">
+          <div className="relative w-full max-w-4xl mx-auto animate-slide-up animate-grow rounded-[2.5rem] bg-white/60 backdrop-blur-2xl border-2 border-purple-300/40 shadow-[0_8px_32px_0_rgba(124,58,237,0.10)] px-8 py-10 flex flex-col items-center gap-8 overflow-hidden">
+            <img
+              src={user?.avatar_url || "https://i.pinimg.com/originals/7c/e9/e3/7ce9e34927261d3b035090cac779fec5.gif"}
+              alt="Profile"
+              className="w-32 h-32 rounded-full border-4 border-purple-300 shadow-2xl object-cover animate-float bg-white"
+              style={{ marginTop: '-2rem', boxShadow: '0 8px 32px 0 rgba(168,139,250,0.18)' }}
+            />
+            <div className="flex-1 flex flex-col justify-center items-center min-w-0">
+              <h1 className="text-4xl md:text-5xl font-black text-purple-700 mb-3 tracking-tight drop-shadow-lg animate-slide-right whitespace-nowrap overflow-hidden text-ellipsis text-center">
+                Welcome back, {user?.full_name || 'Supervisor'}!
+              </h1>
+              <div className="flex flex-wrap justify-center items-center gap-4 mb-3 animate-slide-left">
+                <span className="inline-flex items-center px-4 py-1.5 rounded-xl bg-amber-100/90 text-amber-700 font-bold text-base shadow border border-amber-200/60 animate-pulse-slow">
+                  <Briefcase className="w-5 h-5 mr-2" /> {user?.role || 'Supervisor'}
+                </span>
+                <span className="inline-flex items-center px-4 py-1.5 rounded-xl bg-purple-100/90 text-purple-700 font-bold text-base shadow border border-purple-200/60 animate-pulse-slow">
+                  <CalendarIcon className="w-5 h-5 mr-2" /> Joined: {user?.created_at ? format(new Date(user.created_at), 'MMM d, yyyy') : '---'}
+                </span>
+                <span className="inline-flex items-center px-4 py-1.5 rounded-xl bg-blue-100/90 text-blue-700 font-bold text-base shadow border border-blue-200/60 animate-pulse-slow">
+                  <Users className="w-5 h-5 mr-2" /> Team: {teamMembers.length}
+                </span>
+                <span className="inline-flex items-center px-4 py-1.5 rounded-xl bg-green-100/90 text-green-700 font-bold text-base shadow border border-green-200/60 animate-pulse-slow">
+                  <ClipboardList className="w-5 h-5 mr-2" /> Tasks: {teamTasks.length}
+                </span>
+              </div>
+              <p className="text-gray-700 font-semibold text-lg animate-slide-up bg-white/60 rounded-xl px-4 py-2 shadow border border-purple-100/40 text-center">
+                Manage your team, assign tasks, and track progress with ease!
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2 text-gradient animate-fade-in">Supervisor Dashboard</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setCreateNotificationOpen(true)}
+              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 -mr-2"
             >
-              <Send className="h-4 w-4 mr-2" />
-              Send Notification
+              <Bell className="h-4 w-4 mr-2" />
+              Create Notification
             </Button>
           </div>
         </div>
@@ -506,10 +558,11 @@ const SupervisorDashboard = () => {
                                   size="sm"
                                   variant="outline"
                                   className="text-xs"
-                                  onClick={() => toast({
-                                    title: "View Profile",
-                                    description: `Viewing profile for ${member.full_name || member.email}`,
-                                  })}
+                                  onClick={() => {
+                                    setSelectedEmployeeId(member.id);
+                                    setIsProfileCardOpen(true);
+                                    console.log(`[SupervisorDashboard] Opening profile for employee ID: ${member.id}`);
+                                  }}
                                 >
                                   <UserCheck className="h-3.5 w-3.5 mr-1" /> View Profile
                                 </Button>
@@ -518,12 +571,13 @@ const SupervisorDashboard = () => {
                                   variant="outline"
                                   className="text-xs"
                                   onClick={() => {
-                                    // Filter tasks for this team member
-                                    const memberTasks = teamTasks.filter(task => task.assignee_id === member.id);
-                                    toast({
-                                      title: `${member.full_name || member.email}'s Tasks`,
-                                      description: `${memberTasks.length} tasks assigned (${memberTasks.filter(t => t.status === 'completed').length} completed)`,
+                                    // Set the selected employee for tasks
+                                    setSelectedEmployeeForTasks({
+                                      id: member.id,
+                                      name: member.full_name || member.email
                                     });
+                                    setIsTasksCardOpen(true);
+                                    console.log(`[SupervisorDashboard] Opening tasks for employee ID: ${member.id}`);
                                   }}
                                 >
                                   <ClipboardList className="h-3.5 w-3.5 mr-1" /> View Tasks
@@ -897,10 +951,31 @@ const SupervisorDashboard = () => {
         </Tabs>
       </main>
 
+      {/* Decorative floating elements for extra visual pop (foreground, non-interactive) */}
+      <div className="pointer-events-none fixed inset-0 z-10">
+        <div className="absolute left-10 top-1/3 w-12 h-12 bg-purple-300/40 rounded-full animate-float blur-2xl" style={{animationDuration:'7s'}} />
+        <div className="absolute right-16 top-1/4 w-16 h-16 bg-amber-300/30 rounded-full animate-float blur-2xl" style={{animationDuration:'8s', animationDelay:'1s'}} />
+        <div className="absolute left-1/2 bottom-20 w-20 h-20 bg-blue-300/30 rounded-full animate-float blur-2xl" style={{animationDuration:'6s', animationDelay:'2s'}} />
+      </div>
       {/* Notification Modal */}
       <CreateNotificationModal
         open={createNotificationOpen}
         onOpenChange={setCreateNotificationOpen}
+      />
+
+      {/* Employee Profile Card */}
+      <EmployeeProfileCard
+        open={isProfileCardOpen}
+        onOpenChange={setIsProfileCardOpen}
+        employeeId={selectedEmployeeId}
+      />
+
+      {/* Employee Tasks Card */}
+      <EmployeeTasksCard
+        open={isTasksCardOpen}
+        onOpenChange={setIsTasksCardOpen}
+        employeeId={selectedEmployeeForTasks.id}
+        employeeName={selectedEmployeeForTasks.name}
       />
     </div>
   );

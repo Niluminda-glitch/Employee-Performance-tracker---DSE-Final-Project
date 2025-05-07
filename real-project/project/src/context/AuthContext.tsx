@@ -29,6 +29,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (data: Partial<UserData>) => Promise<void>;
+  updateUserProfile: (profileData: Partial<UserData>) => Promise<boolean>;
   refreshUserData: () => Promise<void>;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -293,6 +294,85 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [token, user]);
 
+  // Update user profile with new avatar
+  const updateUserProfile = useCallback(async (profileData: Partial<UserData>) => {
+    try {
+      console.log('[AuthContext] updateUserProfile: Updating user profile with:', profileData);
+
+      // Check if we're updating avatar_url specifically
+      if (profileData.avatar_url) {
+        console.log('[AuthContext] Updating avatar using direct SQL approach');
+
+        try {
+          // First try the regular API endpoint
+          const response = await api.put(`/users/${user?.id}`, { avatar_url: profileData.avatar_url });
+          const updatedUser = response.data;
+
+          // Check if the avatar_url was actually updated
+          if (updatedUser.avatar_url !== profileData.avatar_url) {
+            console.log('[AuthContext] API endpoint did not update avatar correctly. Using direct SQL approach.');
+
+            // Use a direct SQL approach as a fallback
+            // Use the regular API endpoint with the token
+            const token = localStorage.getItem('token');
+            const sqlResponse = await axios.put(`http://localhost:5000/api/users/${user?.id}`,
+              {
+                avatar_url: profileData.avatar_url
+              },
+              {
+                headers: {
+                  'x-auth-token': token
+                }
+              }
+            );
+
+            // The response should have a success property, but if not, assume it was successful
+            // if we got a response without an error
+            console.log('[AuthContext] SQL update response:', sqlResponse.data);
+
+            // Get the updated user data
+            const userResponse = await api.get('/users/me');
+            const updatedUserData = userResponse.data;
+
+            // Update localStorage with the updated user data
+            localStorage.setItem('user', JSON.stringify(updatedUserData));
+
+            // Update the user state with the new profile data
+            setUser(updatedUserData);
+            console.log('[AuthContext] Avatar updated successfully via SQL:', updatedUserData);
+          } else {
+            // API endpoint worked correctly
+            // Update localStorage with the updated user data
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+
+            // Update the user state with the new profile data
+            setUser(updatedUser);
+            console.log('[AuthContext] Avatar updated successfully via API:', updatedUser);
+          }
+        } catch (apiError) {
+          console.error('[AuthContext] Error updating avatar via API:', apiError);
+          throw apiError;
+        }
+      } else {
+        // For other profile updates, use the regular endpoint
+        const response = await api.put(`/users/${user?.id}`, profileData);
+        const updatedUser = response.data;
+
+        // Update localStorage with the updated user data
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        // Update the user state with the new profile data
+        setUser(updatedUser);
+        console.log('[AuthContext] Profile updated successfully:', updatedUser);
+      }
+
+      return true;
+    } catch (error) {
+      console.error("[AuthContext] Error updating profile:", error);
+      throw error;
+    }
+  }, [api, user]);
+
   // Refresh user data function
   const refreshUserData = useCallback(async () => {
     console.log('[AuthContext] refreshUserData: Refreshing user data');
@@ -322,8 +402,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [token]);
 
-  // Wrap googleLogin in useCallback
-  const googleLoginCallback = useCallback(async () => {
+  // Google login function
+  const googleLogin = useCallback(async () => {
     console.log('[AuthContext] googleLogin: Attempting Google login');
     setError(null);
     setIsLoading(true);
@@ -362,10 +442,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const value = useMemo(() => ({
     user,
     login,
-    googleLogin: googleLoginCallback,
+    googleLogin,
     logout,
     resetPassword: resetPasswordCallback,
     updateProfile,
+    updateUserProfile,
     refreshUserData,
     firstTimeSetup,
     isLoading,
@@ -377,10 +458,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }), [
     user,
     login,
-    googleLoginCallback,
+    googleLogin,
     logout,
     resetPasswordCallback,
     updateProfile,
+    updateUserProfile,
     refreshUserData,
     firstTimeSetup,
     isLoading,

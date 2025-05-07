@@ -236,6 +236,49 @@ router.get('/team', requireSupervisorOrManager, async (req, res) => {
     }
 });
 
+// GET /api/tasks/user/:userId - Get tasks for a specific user (Supervisor/Manager only)
+router.get('/user/:userId', requireSupervisorOrManager, async (req, res) => {
+    const { userId } = req.params;
+    const supervisorId = req.user.id;
+
+    console.log(`[Tasks Route] Supervisor ${supervisorId} fetching tasks for user ID: ${userId}`);
+
+    try {
+        // First verify this user is part of the supervisor's team
+        const isTeamMember = await db.User.findOne({
+            where: {
+                id: userId,
+                supervisor_id: supervisorId
+            }
+        });
+
+        // If user is not found or not part of this supervisor's team
+        if (!isTeamMember && req.user.role !== 'manager') {
+            console.log(`[Tasks Route] User ${userId} is not part of supervisor ${supervisorId}'s team`);
+            return res.status(403).json({
+                message: 'Access denied: You can only view tasks for your team members'
+            });
+        }
+
+        // Fetch the tasks for this user
+        const tasks = await db.Task.findAll({
+            where: { assignee_id: userId },
+            include: [
+                { model: db.User, as: 'assignee', attributes: ['id', 'full_name'] },
+                { model: db.User, as: 'supervisor', attributes: ['id', 'full_name'] }
+            ],
+            order: [['due_date', 'ASC'], ['priority', 'DESC']]
+        });
+
+        console.log(`[Tasks Route] Found ${tasks.length} tasks for user ${userId}`);
+        res.json(tasks);
+
+    } catch (error) {
+        console.error(`[Tasks Route] Error fetching tasks for user ${userId}:`, error);
+        res.status(500).json({ message: 'Failed to retrieve user tasks.' });
+    }
+});
+
 
 // Log all registered routes for debugging
 console.log('[Tasks Route] Registered routes:');

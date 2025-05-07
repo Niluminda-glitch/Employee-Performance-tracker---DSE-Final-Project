@@ -2,6 +2,7 @@
 require('dotenv').config(); // Load .env variables FIRST
 const express = require('express');
 const cors = require('cors');
+const passport = require('passport');
 const db = require('./models'); // Imports models/index.js which initializes Sequelize
 const authRoutes = require('./routes/auth'); // Using our new auth.js file
 const userRoutes = require('./routes/user.routes');
@@ -16,6 +17,7 @@ const mentorRoutes = require('./routes/mentors'); // Import mentors routes
 const notificationRoutes = require('./routes/notifications'); // Import notification routes
 const requestRoutes = require('./routes/requests'); // Import request routes
 const analyticsRoutes = require('./routes/analytics'); // Import analytics routes
+const directUpdateRoutes = require('./routes/direct-update'); // Import direct update routes
 const authMiddleware = require('./middleware/authMiddleware'); // Import the new auth middleware
 
 const app = express();
@@ -30,6 +32,9 @@ app.use(cors({
 }));
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+
+// Initialize Passport
+app.use(passport.initialize());
 
 // Log all requests for debugging
 app.use((req, res, next) => {
@@ -135,6 +140,9 @@ app.use('/api/requests', authMiddleware, requestRoutes); // Apply middleware exp
 
 // Mount analytics routes
 app.use('/api/analytics', analyticsRoutes); // Protection is handled inside analytics.js
+
+// Mount direct update routes
+app.use('/api/direct-update', authMiddleware, directUpdateRoutes); // Apply middleware explicitly
 
 // Protected Routes (Apply authMiddleware BEFORE the route handler)
 // Example: A route to get the current user's profile

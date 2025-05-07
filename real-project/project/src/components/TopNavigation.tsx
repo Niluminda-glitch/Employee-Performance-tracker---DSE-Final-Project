@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, User, BookOpen, HeartPulse, Bell, LogOut, Users, ClipboardList, Menu, ChevronDown, CheckCheck, Send, BarChart } from "lucide-react";
+import { LayoutDashboard, User, BookOpen, HeartPulse, Bell, LogOut, Users, ClipboardList, Menu, ChevronDown, CheckCheck, Send, BarChart, Bed } from "lucide-react";
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from "@/components/ui/navigation-menu";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -9,12 +9,14 @@ import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { PROFILE_PICTURES } from "@/components/ProfilePictureSelector";
 const TopNavigation = ({
   userRole
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const {
+    user,
     logout
   } = useAuth();
   const {
@@ -279,8 +281,18 @@ const TopNavigation = ({
         {/* Mobile Menu Trigger */}
         {isMobile && <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
+              <Button variant="outline" size="icon" className="md:hidden relative">
+                <div className="w-full h-full absolute inset-0 flex items-center justify-center bg-white rounded-md overflow-hidden">
+                  <img
+                    src={user?.avatar_url || PROFILE_PICTURES[0]}
+                    alt={user?.full_name || 'User'}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = PROFILE_PICTURES[0];
+                    }}
+                  />
+                </div>
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </DropdownMenuTrigger>
@@ -311,12 +323,19 @@ const TopNavigation = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="hidden md:flex gap-2 items-center">
-                <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center shadow-sm border border-purple-200">
-                  <span className="text-sm font-semibold text-purple-700">
-                    {userRole === "employee" && "E"}
-                    {userRole === "supervisor" && "S"}
-                    {userRole === "manager" && "M"}
-                  </span>
+                <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-purple-200 overflow-hidden">
+                  <div className="w-full h-full flex items-center justify-center bg-white">
+                    <img
+                      src={user?.avatar_url || PROFILE_PICTURES[0]}
+                      alt={user?.full_name || 'User'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error("TopNav profile image failed to load:", e);
+                        e.target.onerror = null;
+                        e.target.src = PROFILE_PICTURES[0];
+                      }}
+                    />
+                  </div>
                 </div>
                 <div className="flex flex-col items-start">
                   <span className="text-sm font-medium text-foreground">{getUserRoleLabel()}</span>

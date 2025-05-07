@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink, Heart, BookOpen, Coins, Lightbulb, Download } from "lucide-react";
 import TopNavigation from "@/components/TopNavigation";
 import { useAuth } from "@/context/AuthContext";
+import WellbeingBackground from "@/components/WellbeingBackground";
 
 const Wellbeing = () => {
   const { user } = useAuth();
@@ -104,33 +105,36 @@ const Wellbeing = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated Background */}
+      <WellbeingBackground />
+
       <TopNavigation userRole={user?.role} />
 
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-2">Wellbeing Resources</h1>
-        <p className="text-muted-foreground mb-8">Tools and resources to support your physical, mental, and financial wellbeing</p>
+      <main className="container mx-auto px-4 py-8 relative z-10 bg-white/40 backdrop-blur-sm rounded-xl shadow-sm mt-4">
+        <h1 className="text-3xl font-bold mb-3 text-purple-800">Wellbeing Resources</h1>
+        <p className="text-purple-700 mb-8 max-w-2xl">Tools and resources to support your physical, mental, and financial wellbeing for a balanced and fulfilling work life</p>
 
         <div className="mb-16">
           <Tabs defaultValue="physical" className="w-full">
-            <TabsList className="inline-flex w-full space-x-2 bg-gray-100 p-1 rounded-lg">
+            <TabsList className="inline-flex w-full space-x-2 bg-white/50 backdrop-blur-sm p-1 rounded-lg shadow-md border border-white/30">
               <TabsTrigger
                 value="physical"
-                className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300"
               >
                 <Heart className="h-4 w-4 text-red-500" />
                 Physical Health
               </TabsTrigger>
               <TabsTrigger
                 value="mental"
-                className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300"
               >
                 <Lightbulb className="h-4 w-4 text-amber-500" />
                 Mental Wellbeing
               </TabsTrigger>
               <TabsTrigger
                 value="financial"
-                className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                className="flex-1 flex items-center justify-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300"
               >
                 <Coins className="h-4 w-4 text-green-500" />
                 Financial Wellness
@@ -163,10 +167,11 @@ const Wellbeing = () => {
           </Tabs>
         </div>
 
-        <Card className="mt-10 border-purple-200 bg-purple-50">
-          <CardContent className="pt-6 pb-6">
+        <Card className="mt-10 border-white/20 bg-purple-100/70 backdrop-blur-md shadow-lg relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-200/30 to-blue-200/20 pointer-events-none"></div>
+          <CardContent className="pt-6 pb-6 relative z-10">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-              <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+              <div className="w-20 h-20 rounded-full bg-purple-200/80 backdrop-blur-sm flex items-center justify-center shrink-0 shadow-md">
                 <BookOpen className="h-10 w-10 text-purple-600" />
               </div>
               <div className="flex-1 text-center md:text-left">
@@ -174,14 +179,14 @@ const Wellbeing = () => {
                   Need Someone to Talk To?
                 </h3>
                 <p className="text-purple-700 mb-4">
-                  Our Employee Assistance Program offers free, confidential counseling and support 
-                  for all employees and their family members. Available 24/7 for any personal or 
+                  Our Employee Assistance Program offers free, confidential counseling and support
+                  for all employees and their family members. Available 24/7 for any personal or
                   work-related concerns.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                   <Button
                     asChild
-                    className="bg-purple-600 hover:bg-purple-700"
+                    className="bg-purple-600 hover:bg-purple-700 shadow-md transition-all duration-300"
                   >
                     <a
                       href="https://www.beyondblue.org.au/get-support/talk-to-a-counsellor"
@@ -194,7 +199,7 @@ const Wellbeing = () => {
                   <Button
                     asChild
                     variant="outline"
-                    className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                    className="border-purple-300 text-purple-700 hover:bg-purple-100 bg-white/50 backdrop-blur-sm transition-all duration-300"
                   >
                     <a
                       href="https://www.7cups.com"
@@ -216,7 +221,7 @@ const Wellbeing = () => {
 
 const ResourceCard = ({ resource }) => {
   return (
-    <Card className="h-full">
+    <Card className="h-full bg-white/80 backdrop-blur-sm border-white/20 shadow-md hover:shadow-lg transition-all duration-300">
       <CardHeader className="pb-2">
         <CardTitle>{resource.title}</CardTitle>
         <CardDescription>{resource.description}</CardDescription>
@@ -227,7 +232,7 @@ const ResourceCard = ({ resource }) => {
           <Button
             variant="outline"
             size="sm"
-            className="flex items-center"
+            className="flex items-center bg-white/70 hover:bg-white/90 transition-colors"
             onClick={() => window.open(resource.link, '_blank', 'noopener,noreferrer')}
           >
             {resource.type.includes("PDF") ? (

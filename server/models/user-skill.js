@@ -52,6 +52,12 @@ module.exports = (sequelize, Sequelize) => {
     availability: {
       type: Sequelize.STRING,
       allowNull: true
+    },
+    isTraining: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: 'is_training'
     }
   }, {
     timestamps: true,

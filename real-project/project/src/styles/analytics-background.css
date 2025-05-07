@@ -1,0 +1,128 @@
+/* Analytics Background Animations */
+
+/* Pulse animation for data clusters */
+@keyframes pulse-data {
+  0% {
+    opacity: 0.03;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.06;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.03;
+    transform: scale(1);
+  }
+}
+
+.animate-pulse-data {
+  animation: pulse-data 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Data point blink animation */
+@keyframes data-blink {
+  0% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0.1;
+  }
+}
+
+.data-point {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(59, 130, 246, 0.5);
+}
+
+.data-point.blink {
+  animation: data-blink 4s ease-in-out infinite;
+}
+
+/* Connection line animation */
+@keyframes connection-pulse {
+  0% {
+    opacity: 0.05;
+  }
+  50% {
+    opacity: 0.15;
+  }
+  100% {
+    opacity: 0.05;
+  }
+}
+
+.connection-line {
+  position: absolute;
+  height: 1px;
+  background-color: rgba(59, 130, 246, 0.3);
+  transform-origin: left center;
+}
+
+.connection-line.pulse {
+  animation: connection-pulse 6s ease-in-out infinite;
+}
+
+/* Grid line subtle animation */
+@keyframes grid-fade {
+  0% {
+    opacity: 0.05;
+  }
+  50% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 0.05;
+  }
+}
+
+.grid-line {
+  position: absolute;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.grid-line.fade {
+  animation: grid-fade 10s ease-in-out infinite;
+}
+
+/* Data flow animation */
+@keyframes data-flow {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.data-flow {
+  animation: data-flow 15s ease-in-out infinite;
+}
+
+/* Animation delays */
+.delay-1 {
+  animation-delay: 1s;
+}
+
+.delay-2 {
+  animation-delay: 2s;
+}
+
+.delay-3 {
+  animation-delay: 3s;
+}
+
+.delay-4 {
+  animation-delay: 4s;
+}
+
+.delay-5 {
+  animation-delay: 5s;
+}

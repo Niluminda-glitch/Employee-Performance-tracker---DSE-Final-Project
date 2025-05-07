@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import AuthCallback from "./pages/AuthCallback";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import ManagerDashboard from "./pages/ManagerDashboard";
@@ -25,6 +25,8 @@ import StretchReminder from "./components/StretchReminder";
 import CursorEffect from "./components/CursorEffect";
 import TaskWorkflow from "./pages/TaskWorkflow";
 import DatabaseInitializer from "./components/DatabaseInitializer";
+import PageTransition from "./components/PageTransition";
+import "./styles/nprogress-custom.css";
 
 // Create the QueryClient outside of the component
 const queryClient = new QueryClient();
@@ -34,11 +36,31 @@ const AppContent = () => {
   const location = useLocation();
   const { setCursorDisabled } = useCursor();
 
+  // List of valid navigation paths for 404 detection
+  const navPaths = [
+    '/',
+    '/auth',
+    '/auth/callback',
+    '/employee-dashboard',
+    '/supervisor-dashboard',
+    '/manager-dashboard',
+    '/profile',
+    '/mentors',
+    '/wellbeing',
+    '/notifications',
+    '/task-workflow',
+    '/team-tasks',
+    '/analytics',
+    '/team-management',
+    '/loading-demo'
+  ];
+
   // Determine if cursor effect should be disabled on certain pages
   useEffect(() => {
-    // Disable cursor effect on login page when loading is shown
+    // Disable cursor effect on login page and 404 page
     const isLoginPage = location.pathname === '/';
-    setCursorDisabled(isLoginPage);
+    const is404Page = location.pathname !== '/' && !navPaths.includes(location.pathname);
+    setCursorDisabled(isLoginPage || is404Page);
   }, [location, setCursorDisabled]);
 
   return (
@@ -46,68 +68,71 @@ const AppContent = () => {
       {/* Global cursor effect */}
       <CursorEffect />
 
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<Index />} />
-        <Route path="/loading-demo" element={<LoadingDemo />} />
+      <PageTransition transitionType="slide" duration={0.4}>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Index />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/loading-demo" element={<LoadingDemo />} />
 
-        {/* Role-specific dashboards */}
-        <Route
-          path="/employee-dashboard"
-          element={<ProtectedRoute element={<EmployeeDashboard />} requiredRole="employee" />}
-        />
-        <Route
-          path="/supervisor-dashboard"
-          element={<ProtectedRoute element={<SupervisorDashboard />} requiredRole="supervisor" />}
-        />
-        <Route
-          path="/manager-dashboard"
-          element={<ProtectedRoute element={<ManagerDashboard />} requiredRole="manager" />}
-        />
+          {/* Role-specific dashboards */}
+          <Route
+            path="/employee-dashboard"
+            element={<ProtectedRoute element={<EmployeeDashboard />} requiredRole="employee" />}
+          />
+          <Route
+            path="/supervisor-dashboard"
+            element={<ProtectedRoute element={<SupervisorDashboard />} requiredRole="supervisor" />}
+          />
+          <Route
+            path="/manager-dashboard"
+            element={<ProtectedRoute element={<ManagerDashboard />} requiredRole="manager" />}
+          />
 
-        {/* Routes accessible by all authenticated users */}
-        <Route
-          path="/profile"
-          element={<ProtectedRoute element={<Profile />} />}
-        />
-        <Route
-          path="/mentors"
-          element={<ProtectedRoute element={<FindMentor />} />}
-        />
-        <Route
-          path="/wellbeing"
-          element={<ProtectedRoute element={<Wellbeing />} />}
-        />
-        <Route
-          path="/notifications"
-          element={<ProtectedRoute element={<Notifications />} />}
-        />
+          {/* Routes accessible by all authenticated users */}
+          <Route
+            path="/profile"
+            element={<ProtectedRoute element={<Profile />} />}
+          />
+          <Route
+            path="/mentors"
+            element={<ProtectedRoute element={<FindMentor />} />}
+          />
+          <Route
+            path="/wellbeing"
+            element={<ProtectedRoute element={<Wellbeing />} />}
+          />
+          <Route
+            path="/notifications"
+            element={<ProtectedRoute element={<Notifications />} />}
+          />
 
-        {/* Employee-specific routes */}
-        <Route
-          path="/task-workflow"
-          element={<ProtectedRoute element={<TaskWorkflow />} requiredRole="employee" />}
-        />
+          {/* Employee-specific routes */}
+          <Route
+            path="/task-workflow"
+            element={<ProtectedRoute element={<TaskWorkflow />} requiredRole="employee" />}
+          />
 
-        {/* Supervisor functionality */}
-        <Route
-          path="/team-tasks"
-          element={<ProtectedRoute element={<TeamTasks />} requiredRole="supervisor" />}
-        />
-        <Route
-          path="/analytics"
-          element={<ProtectedRoute element={<Analytics />} requiredRole={["supervisor", "manager"]} />}
-        />
+          {/* Supervisor functionality */}
+          <Route
+            path="/team-tasks"
+            element={<ProtectedRoute element={<TeamTasks />} requiredRole="supervisor" />}
+          />
+          <Route
+            path="/analytics"
+            element={<ProtectedRoute element={<Analytics />} requiredRole={["supervisor", "manager"]} />}
+          />
 
-        {/* Manager functionality */}
-        <Route
-          path="/team-management"
-          element={<ProtectedRoute element={<TeamManagement />} requiredRole="manager" />}
-        />
+          {/* Manager functionality */}
+          <Route
+            path="/team-management"
+            element={<ProtectedRoute element={<TeamManagement />} requiredRole="manager" />}
+          />
 
-        {/* Catch-all route for 404 */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          {/* Catch-all route for 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </PageTransition>
 
       {/* Global StretchReminder component */}
       <StretchReminder />

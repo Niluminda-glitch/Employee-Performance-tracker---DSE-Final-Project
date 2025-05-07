@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
 import { toast } from "sonner";
 import NotificationSettings from "@/components/NotificationSettings";
+import NotificationsBackground from "@/components/NotificationsBackground";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -176,14 +177,17 @@ const Notifications = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated Background */}
+      <NotificationsBackground />
+
       <TopNavigation userRole={user?.role} />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+      <main className="container mx-auto px-4 py-8 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 p-4 bg-white/60 backdrop-blur-sm rounded-lg shadow-sm">
           <div>
-            <h1 className="text-2xl font-bold">Notifications</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-3xl font-bold mb-2 text-purple-800 drop-shadow-sm">Notifications</h1>
+            <p className="text-purple-700 font-medium">
               {loading ? 'Loading notifications...' : `You have ${unreadCount.total} unread notifications`}
             </p>
           </div>
@@ -286,7 +290,7 @@ const Notifications = () => {
 
           {/* All Notifications */}
           <TabsContent value="all">
-            <Card className="shadow-card hover:shadow-card-hover">
+            <Card className="shadow-card hover:shadow-card-hover bg-white/90 backdrop-blur-sm border border-purple-100/50">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div>
                   <CardTitle>All Notifications</CardTitle>
@@ -331,7 +335,7 @@ const Notifications = () => {
 
           {/* Important Notifications */}
           <TabsContent value="important">
-            <Card className="shadow-card hover:shadow-card-hover">
+            <Card className="shadow-card hover:shadow-card-hover bg-white/90 backdrop-blur-sm border border-purple-100/50">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div>
                   <CardTitle>Important Notifications</CardTitle>
@@ -365,7 +369,7 @@ const Notifications = () => {
 
           {/* System Notifications */}
           <TabsContent value="system">
-            <Card className="shadow-card hover:shadow-card-hover">
+            <Card className="shadow-card hover:shadow-card-hover bg-white/90 backdrop-blur-sm border border-purple-100/50">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div>
                   <CardTitle>System Notifications</CardTitle>
@@ -406,7 +410,7 @@ const Notifications = () => {
 
           {/* Task Notifications */}
           <TabsContent value="tasks">
-            <Card className="shadow-card hover:shadow-card-hover">
+            <Card className="shadow-card hover:shadow-card-hover bg-white/90 backdrop-blur-sm border border-purple-100/50">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div>
                   <CardTitle>Task Notifications</CardTitle>
@@ -447,7 +451,7 @@ const Notifications = () => {
 
           {/* Message Notifications */}
           <TabsContent value="messages">
-            <Card className="shadow-card hover:shadow-card-hover">
+            <Card className="shadow-card hover:shadow-card-hover bg-white/90 backdrop-blur-sm border border-purple-100/50">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div>
                   <CardTitle>Message Notifications</CardTitle>
@@ -498,7 +502,7 @@ const Notifications = () => {
 
       {/* Create Notification Dialog */}
       <Dialog open={createNotificationOpen} onOpenChange={setCreateNotificationOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-white/95 backdrop-blur-md border-purple-100">
           <DialogHeader>
             <DialogTitle>Create System Notification</DialogTitle>
             <DialogDescription>
@@ -572,9 +576,9 @@ const NotificationList = ({
 }) => {
   if (notifications.length === 0) {
     return (
-      <div className="text-center py-12 border rounded-lg bg-gray-50">
-        <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-        <p className="text-muted-foreground">No notifications to display</p>
+      <div className="text-center py-12 border rounded-lg bg-white/70 backdrop-blur-sm border-purple-100/50">
+        <Bell className="h-12 w-12 text-purple-300 mx-auto mb-3 animate-pulse-slow" />
+        <p className="text-purple-600 font-medium">No notifications to display</p>
       </div>
     );
   }
@@ -584,7 +588,7 @@ const NotificationList = ({
       {notifications.map(notification => (
         <div
           key={notification.id}
-          className={`border rounded-lg p-4 transition-colors ${!notification.is_read ? 'bg-purple-50 border-purple-100' : ''}`}
+          className={`border rounded-lg p-4 transition-all duration-300 hover:shadow-md ${!notification.is_read ? 'bg-purple-50/80 border-purple-200 backdrop-blur-sm' : 'bg-white/80 backdrop-blur-sm border-purple-100/30'}`}
         >
           <div className="flex items-start">
             <div className="mr-4 mt-1">

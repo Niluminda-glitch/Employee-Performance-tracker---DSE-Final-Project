@@ -196,9 +196,9 @@ const EmployeeDashboard = () => {
         <div className="relative mb-10">
           <div className="relative w-full max-w-4xl mx-auto animate-slide-up animate-grow rounded-[2.5rem] bg-white/60 backdrop-blur-2xl border-2 border-purple-300/40 shadow-[0_8px_32px_0_rgba(124,58,237,0.10)] px-8 py-10 flex flex-col items-center gap-8 overflow-hidden">
             <img
-              src={user?.profile_picture || '/default-avatar.png'}
+              src={user?.avatar_url || "https://i.pinimg.com/originals/7c/e9/e3/7ce9e34927261d3b035090cac779fec5.gif"}
               alt="Profile"
-              className="w-32 h-32 rounded-full border-4 border-purple-300 shadow-2xl object-cover animate-float bg-gradient-to-br from-purple-100/70 to-pink-100/70"
+              className="w-32 h-32 rounded-full border-4 border-purple-300 shadow-2xl object-cover animate-float bg-white"
               style={{ marginTop: '-2rem', boxShadow: '0 8px 32px 0 rgba(168,139,250,0.18)' }}
             />
             <div className="flex-1 flex flex-col justify-center items-center min-w-0">
@@ -886,7 +886,7 @@ const EmployeeDashboard = () => {
       />
     </div>
   );
-};  
+};
 
 export default EmployeeDashboard;
 
