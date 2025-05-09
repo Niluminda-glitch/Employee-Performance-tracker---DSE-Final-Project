@@ -1,27 +1,50 @@
-const dbConfig = require('../config/db.config.js');
-const Sequelize = require('sequelize');
 const fs = require('fs');
 const path = require('path');
+const Sequelize = require('sequelize');
 const basename = path.basename(__filename);
 
+// Determine which configuration to use (Supabase or traditional PostgreSQL)
+const useSupabase = process.env.USE_SUPABASE === 'true';
+const dbConfig = useSupabase
+  ? require('../config/supabase.config.js')
+  : require('../config/db.config.js');
+
+console.log(`Using ${useSupabase ? 'Supabase' : 'PostgreSQL'} database configuration`);
+
+// Check if we have a connection string for Supabase
+const connectionString = useSupabase ? process.env.SUPABASE_CONNECTION_STRING : null;
+
 // Create Sequelize instance
-const sequelize = new Sequelize(
-  dbConfig.DB,
-  dbConfig.USER,
-  dbConfig.PASSWORD,
-  {
-    host: dbConfig.HOST,
-    port: dbConfig.PORT,
-    dialect: dbConfig.dialect,
-    pool: {
-      max: dbConfig.pool.max,
-      min: dbConfig.pool.min,
-      acquire: dbConfig.pool.acquire,
-      idle: dbConfig.pool.idle
-    },
-    logging: console.log // Set to false to disable SQL logging
-  }
-);
+const sequelize = connectionString
+  ? new Sequelize(connectionString, {
+      dialect: 'postgres',
+      pool: dbConfig.pool,
+      logging: process.env.NODE_ENV === 'production' ? false : console.log,
+      dialectOptions: {
+        ...(dbConfig.dialectOptions || {}),
+        // Disable prepared statements for Supavisor transaction mode
+        // This is required when using port 6543
+        prepare: false
+      }
+    })
+  : new Sequelize(
+      dbConfig.DB_NAME || dbConfig.DB,
+      dbConfig.DB_USER || dbConfig.USER,
+      dbConfig.DB_PASSWORD || dbConfig.PASSWORD,
+      {
+        host: dbConfig.DB_HOST || dbConfig.HOST,
+        port: dbConfig.DB_PORT || dbConfig.PORT,
+        dialect: dbConfig.dialect || 'postgres',
+        pool: dbConfig.pool,
+        logging: process.env.NODE_ENV === 'production' ? false : console.log,
+        dialectOptions: {
+          ...(dbConfig.dialectOptions || {}),
+          // Disable prepared statements for Supavisor transaction mode
+          // This is required when using port 6543
+          prepare: false
+        }
+      }
+    );
 
 const db = {};
 

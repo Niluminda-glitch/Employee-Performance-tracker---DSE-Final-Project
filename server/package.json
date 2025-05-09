@@ -21,7 +21,11 @@
     "test-auth": "node test-auth-middleware.js",
     "test-users-me": "node test-users-me.js",
     "create-operations-table": "node database/run_operations_sql.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test-supabase": "node test-supabase-connection.js",
+    "migrate-to-supabase": "node database/migrate-to-supabase.js",
+    "start-supabase": "cross-env USE_SUPABASE=true node server.js",
+    "dev-supabase": "cross-env USE_SUPABASE=true nodemon server.js"
   },
   "dependencies": {
     "axios": "^1.6.2",
@@ -38,6 +42,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "nodemon": "^3.0.2"
   }
 }
