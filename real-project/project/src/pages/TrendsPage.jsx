@@ -74,9 +74,11 @@ const fetchTrendData = async (trendType) => {
 // Real implementation of Gemini API
 const fetchGeminiSuggestions = async (industry, styles, skills) => {
   try {
-    const API_KEY = "AIzaSyAdSsqADZu0sXL2XN9aPfz58tGWIz-0Fcw";
+    // Get API key from environment variable
+    const API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
 
     if (!API_KEY) {
+      console.error("Gemini API key is missing. Please set REACT_APP_GEMINI_API_KEY in your .env file.");
       throw new Error("Gemini API key is missing");
     }
 
