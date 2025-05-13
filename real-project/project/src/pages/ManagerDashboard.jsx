@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart, LineChart, Users, ClipboardList, Building,
-  Mail, Briefcase, UserCheck, Edit, CalendarIcon, AlertCircle, UserX, Send, Bell
+  Mail, Briefcase, UserCheck, Edit, CalendarIcon, AlertCircle, UserX, Send, Bell,
+  TrendingUp
 } from "lucide-react";
 import TopNavigation from "@/components/TopNavigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -667,7 +668,7 @@ const ManagerDashboard = () => {
             </div>
           </div>
         </div>
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
           <div>
             <h1 className="text-3xl font-bold mb-2 text-gradient animate-fade-in">Manager Dashboard</h1>
           </div>
@@ -680,6 +681,16 @@ const ManagerDashboard = () => {
             </Button>
           </div>
         </div>
+
+        {/* Standalone Trends Button - More visible */}
+        <Button
+          onClick={() => navigate('/trends')}
+          className="bg-teal-600 hover:bg-teal-700 text-white mb-6 shadow-md"
+          size="lg"
+        >
+          <TrendingUp className="h-5 w-5 mr-2" />
+          View Industry Trends
+        </Button>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

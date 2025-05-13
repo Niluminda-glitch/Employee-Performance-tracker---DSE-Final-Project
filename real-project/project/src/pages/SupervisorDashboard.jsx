@@ -6,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Users, ClipboardList, Calendar as CalendarIcon, Check, Clock, AlertCircle,
   ThumbsUp, ThumbsDown, FileText, Download, RefreshCw, Building,
-  Mail, Briefcase, UserCheck, Plus, ArrowRightCircle, CheckCircle2, UserPlus, Send, Bell
+  Mail, Briefcase, UserCheck, Plus, ArrowRightCircle, CheckCircle2, UserPlus, Send, Bell,
+  TrendingUp
 } from "lucide-react";
 import TopNavigation from "@/components/TopNavigation";
 import { useToast } from "@/hooks/use-toast";
@@ -355,7 +356,7 @@ const SupervisorDashboard = () => {
             </div>
           </div>
         </div>
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
           <div>
             <h1 className="text-3xl font-bold mb-2 text-gradient animate-fade-in">Supervisor Dashboard</h1>
           </div>
@@ -368,6 +369,16 @@ const SupervisorDashboard = () => {
             </Button>
           </div>
         </div>
+
+        {/* Standalone Trends Button - More visible */}
+        <Button
+          onClick={() => navigate('/trends')}
+          className="bg-teal-600 hover:bg-teal-700 text-white mb-6 shadow-md"
+          size="lg"
+        >
+          <TrendingUp className="h-5 w-5 mr-2" />
+          View Industry Trends
+        </Button>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

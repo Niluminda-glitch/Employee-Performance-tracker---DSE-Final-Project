@@ -18,6 +18,7 @@ import Notifications from "./pages/Notifications";
 import TeamTasks from "./pages/TeamTasks";
 import TeamManagement from "./pages/TeamManagement";
 import Analytics from "./pages/Analytics";
+import TrendsPage from "./pages/TrendsPage";
 import LoadingDemo from "./pages/LoadingDemo";
 import RefreshPage from "./pages/RefreshPage";
 import { AuthProvider, ProtectedRoute } from "./context/AuthContext";
@@ -55,6 +56,7 @@ const AppContent = () => {
     '/team-requests',
     '/analytics',
     '/team-management',
+    '/trends',
     '/loading-demo',
     '/refresh-page'
   ];
@@ -130,6 +132,11 @@ const AppContent = () => {
           <Route
             path="/analytics"
             element={<ProtectedRoute element={<Analytics />} requiredRole={["supervisor", "manager"]} />}
+          />
+
+          <Route
+            path="/trends"
+            element={<ProtectedRoute element={<TrendsPage />} requiredRole={["supervisor", "manager"]} />}
           />
 
           {/* Manager functionality */}
