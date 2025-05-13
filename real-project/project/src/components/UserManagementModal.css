@@ -1,0 +1,4 @@
+/* Hide the close button in the QR code dialog */
+.hideCloseButton [data-radix-collection-item] {
+  display: none !important;
+}

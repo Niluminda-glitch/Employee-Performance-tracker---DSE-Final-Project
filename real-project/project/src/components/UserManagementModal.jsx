@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,11 +7,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from '../context/AuthContext';
+import LoadingAnimation from './LoadingAnimation';
+import { useLocation } from "react-router-dom";
+
+// Add CSS to hide the close button in the QR code dialog
+import './UserManagementModal.css';
 
 const UserManagementModal = ({ open, onOpenChange, mode = "add", userData = null }) => {
   const isEditMode = mode === "edit";
   const title = isEditMode ? "Edit User" : "Add New User";
   const { api } = useAuth(); // Get the authenticated API instance
+  const location = useLocation();
 
   const [formData, setFormData] = useState({
     name: userData?.name || "",
@@ -29,20 +35,40 @@ const UserManagementModal = ({ open, onOpenChange, mode = "add", userData = null
   const [showQRCode, setShowQRCode] = useState(false);
   const [userCredentials, setUserCredentials] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  // Function to trigger a refresh in the parent component
+  const triggerParentRefresh = () => {
+    // Dispatch a custom event that the parent component listens for
+    const refreshEvent = new Event('team-management-refresh');
+    window.dispatchEvent(refreshEvent);
+
+    // Also dispatch a popstate event to force components to re-render
+    window.dispatchEvent(new Event('popstate'));
+  };
 
   // Fetch departments, supervisors and skills when component mounts
   useEffect(() => {
+    // Only fetch data when the modal is open
+    if (!open) return;
+
+    // Set loading state immediately
+    setLoading(true);
+
+    let isMounted = true;
+
     const fetchData = async () => {
       if (!api) {
         console.error('API instance not available');
-        setError('Authentication error. Please try logging in again.');
-        setLoading(false);
+        if (isMounted) {
+          setError('Authentication error. Please try logging in again.');
+          setLoading(false);
+        }
         return;
       }
 
       try {
-        setLoading(true);
         setError(null);
 
         // Check if API is properly configured
@@ -55,10 +81,14 @@ const UserManagementModal = ({ open, onOpenChange, mode = "add", userData = null
         try {
           const departmentsResponse = await api.get('/departments');
           console.log('Departments response:', departmentsResponse.data);
-          setDepartments(Array.isArray(departmentsResponse.data) ? departmentsResponse.data : []);
+          if (isMounted) {
+            setDepartments(Array.isArray(departmentsResponse.data) ? departmentsResponse.data : []);
+          }
         } catch (deptError) {
           console.error('Error fetching departments:', deptError);
-          setDepartments([]);
+          if (isMounted) {
+            setDepartments([]);
+          }
         }
 
         // Fetch supervisors (users with role="supervisor") from the database
@@ -66,10 +96,14 @@ const UserManagementModal = ({ open, onOpenChange, mode = "add", userData = null
         try {
           const supervisorsResponse = await api.get('/manager/users', { params: { role: 'supervisor' } });
           console.log('Supervisors response:', supervisorsResponse.data);
-          setSupervisors(Array.isArray(supervisorsResponse.data) ? supervisorsResponse.data : []);
+          if (isMounted) {
+            setSupervisors(Array.isArray(supervisorsResponse.data) ? supervisorsResponse.data : []);
+          }
         } catch (supError) {
           console.error('Error fetching supervisors:', supError);
-          setSupervisors([]);
+          if (isMounted) {
+            setSupervisors([]);
+          }
         }
 
         // Fetch skills from the database
@@ -77,22 +111,36 @@ const UserManagementModal = ({ open, onOpenChange, mode = "add", userData = null
         try {
           const skillsResponse = await api.get('/skills');
           console.log('Skills response:', skillsResponse.data);
-          setSkills(Array.isArray(skillsResponse.data) ? skillsResponse.data : []);
+          if (isMounted) {
+            setSkills(Array.isArray(skillsResponse.data) ? skillsResponse.data : []);
+          }
         } catch (skillError) {
           console.error('Error fetching skills:', skillError);
-          setSkills([]);
+          if (isMounted) {
+            setSkills([]);
+          }
         }
       } catch (error) {
         console.error('Error in fetchData:', error);
-        setError('Failed to load form data: ' + (error.response?.data?.message || error.message));
-        toast.error('Failed to load form data');
+        if (isMounted) {
+          setError('Failed to load form data: ' + (error.response?.data?.message || error.message));
+          toast.error('Failed to load form data');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
+    // Execute the fetch
     fetchData();
-  }, [api]);
+
+    // Clean up function
+    return () => {
+      isMounted = false;
+    };
+  }, [api, open, location.key]); // Use location.key to trigger re-fetch on navigation
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -123,6 +171,9 @@ const UserManagementModal = ({ open, onOpenChange, mode = "add", userData = null
       toast.error('Authentication error. Please try logging in again.');
       return;
     }
+
+    // Set submitting state to true to show loading animation
+    setSubmitting(true);
 
     try {
       // Prepare data for submission
@@ -170,6 +221,9 @@ const UserManagementModal = ({ open, onOpenChange, mode = "add", userData = null
         toast.success("User updated successfully", {
           description: `${formData.name}'s information has been updated`
         });
+
+        // Trigger a refresh in the parent component
+        triggerParentRefresh();
       } else {
         // For new users, the backend will generate a temporary password
         // No need to set password here
@@ -211,6 +265,9 @@ const UserManagementModal = ({ open, onOpenChange, mode = "add", userData = null
           toast.success("User added successfully", {
             description: `${formData.name} has been added as a ${formData.role}`
           });
+
+          // Trigger a refresh in the parent component
+          triggerParentRefresh();
         } catch (postError) {
           console.error('Error in POST request:', postError);
           console.error('Error response:', postError.response);
@@ -238,8 +295,25 @@ const UserManagementModal = ({ open, onOpenChange, mode = "add", userData = null
         errorMessage += ` - ${errorData.error}`;
       }
 
-      setError(errorMessage);
-      toast.error(errorMessage);
+      // Check if this is an email-related error (already exists, etc.)
+      const isEmailError =
+        errorMessage.toLowerCase().includes('email') ||
+        (errorData?.errors && errorData.errors.some(e => e.field === 'email')) ||
+        error.response?.status === 409; // Conflict status often used for duplicate resources
+
+      // For email errors, just show a toast and don't open an error dialog
+      if (isEmailError) {
+        toast.error(errorMessage, {
+          description: "Please use a different email address"
+        });
+      } else {
+        // For other errors, set the error state which will show the error dialog
+        setError(errorMessage);
+        toast.error(errorMessage);
+      }
+    } finally {
+      // Set submitting state back to false when done
+      setSubmitting(false);
     }
   };
 
@@ -252,7 +326,23 @@ const UserManagementModal = ({ open, onOpenChange, mode = "add", userData = null
   const closeModal = () => {
     setShowQRCode(false);
     setUserCredentials(null);
-    onOpenChange(false);
+
+    // Notify the parent component to close the modal with refresh flag
+    if (typeof onOpenChange === 'function') {
+      // If onOpenChange accepts a second parameter for refresh, use it
+      if (onOpenChange.length >= 2) {
+        onOpenChange(false, true); // Pass true to indicate refresh needed
+      } else {
+        // Otherwise just close the modal
+        onOpenChange(false);
+
+        // And trigger refresh separately
+        setTimeout(() => {
+          console.log('Triggering refresh after modal close');
+          triggerParentRefresh();
+        }, 100);
+      }
+    }
   };
 
   // Generate QR code content
@@ -354,7 +444,7 @@ Login URL: ${loginUrl}
 
   return (
     <Dialog open={open} onOpenChange={showQRCode ? null : onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={`sm:max-w-md ${showQRCode ? 'hideCloseButton' : ''}`}>
         {!showQRCode ? (
           <>
             <DialogHeader>
@@ -487,47 +577,22 @@ Login URL: ${loginUrl}
                 </div>
               )}
 
-              <DialogFooter className="pt-4 flex-col space-y-2">
+              <DialogFooter className="pt-4">
                 <div className="flex justify-between w-full">
                   <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit">
-                    {isEditMode ? "Update User" : "Add User"}
+                  <Button type="submit" disabled={submitting}>
+                    {submitting ? (
+                      <div className="flex items-center gap-2">
+                        <LoadingAnimation type="beat" size={20} color="#ffffff" />
+                        <span>{isEditMode ? "Updating..." : "Adding..."}</span>
+                      </div>
+                    ) : (
+                      isEditMode ? "Update User" : "Add User"
+                    )}
                   </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs"
-                  onClick={() => {
-                    console.log('API instance:', api);
-                    console.log('API headers:', api?.defaults?.headers);
-                    console.log('API base URL:', api?.defaults?.baseURL);
-                    console.log('Departments:', departments);
-                    console.log('Supervisors:', supervisors);
-                    console.log('Skills:', skills);
-
-                    // Make a test request to check connectivity
-                    const testEndpoints = async () => {
-                      try {
-                        const testResponse = await api.get('/departments');
-                        console.log('Test response from /departments:', testResponse.data);
-                        toast.success('Test request to /departments successful');
-                      } catch (error) {
-                        console.error('Test request failed:', error);
-                        toast.error('Test request failed: ' + (error.response?.data?.message || error.message));
-                      }
-                    };
-
-                    testEndpoints();
-
-                    setError(`Debug info logged to console. Departments: ${departments.length}, Supervisors: ${supervisors.length}, Skills: ${skills.length}`);
-                  }}
-                >
-                  Debug: Test API Connection
-                </Button>
               </DialogFooter>
             </form>
           </>

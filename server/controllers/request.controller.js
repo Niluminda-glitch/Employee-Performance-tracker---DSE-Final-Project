@@ -42,7 +42,7 @@ exports.getTeamRequests = async (req, res) => {
 
     // Get requests from team members
     const requests = await Request.findAll({
-      where: { 
+      where: {
         user_id: {
           [Op.in]: teamMemberIds
         }
@@ -106,6 +106,8 @@ exports.createRequest = async (req, res) => {
     const { type, start_date, end_date, hours, reason } = req.body;
     const userId = req.user.id;
 
+    console.log(`Creating ${type} request for user ${userId} from ${start_date} to ${end_date}`);
+
     // Validate required fields
     if (!type || !start_date || !end_date || !reason) {
       return res.status(400).json({ message: 'Type, start date, end date, and reason are required' });
@@ -122,37 +124,75 @@ exports.createRequest = async (req, res) => {
     }
 
     // Create request
-    const request = await Request.create({
-      user_id: userId,
-      type,
-      start_date,
-      end_date,
-      hours: type === 'overtime' ? hours : null,
-      reason,
-      status: 'pending'
-    });
+    let request;
+    try {
+      request = await Request.create({
+        user_id: userId,
+        type,
+        start_date,
+        end_date,
+        hours: type === 'overtime' ? hours : null,
+        reason,
+        status: 'pending'
+      });
+      console.log(`Request created successfully with ID: ${request.id}`);
+    } catch (requestError) {
+      console.error('Error creating request record:', requestError);
+      return res.status(500).json({ message: 'Failed to create request record', error: requestError.message });
+    }
 
     // Get user's supervisor
-    const user = await User.findByPk(userId, {
-      include: [
-        {
-          model: User,
-          as: 'supervisor',
-          attributes: ['id', 'full_name', 'email']
-        }
-      ]
-    });
+    let user;
+    try {
+      user = await User.findByPk(userId, {
+        include: [
+          {
+            model: User,
+            as: 'supervisor',
+            attributes: ['id', 'full_name', 'email']
+          }
+        ]
+      });
+      console.log(`User found: ${user.full_name}, Supervisor: ${user.supervisor ? user.supervisor.full_name : 'None'}`);
+    } catch (userError) {
+      console.error('Error fetching user details:', userError);
+      // Return the created request even if we can't fetch the user details
+      return res.status(201).json(request);
+    }
 
     // Create notification for supervisor if user has one
-    if (user.supervisor) {
-      await Notification.create({
-        title: `New ${type} request`,
-        message: `${user.full_name} has submitted a ${type} request from ${start_date} to ${end_date}`,
-        type: 'request_submitted',
-        user_id: user.supervisor.id,
-        related_user_id: userId,
-        is_read: false
-      });
+    if (user.supervisor && user.supervisor.id) {
+      try {
+        // First try with 'request_submitted' type
+        try {
+          await Notification.create({
+            title: `New ${type} request`,
+            message: `${user.full_name} has submitted a ${type} request from ${start_date} to ${end_date}`,
+            type: 'request_submitted',
+            user_id: user.supervisor.id,
+            related_user_id: userId,
+            is_read: false
+          });
+          console.log(`Notification created with type 'request_submitted' for supervisor ${user.supervisor.id}`);
+        } catch (enumError) {
+          // If that fails, fall back to 'system' type
+          console.log('Falling back to system notification type');
+          await Notification.create({
+            title: `New ${type} request`,
+            message: `${user.full_name} has submitted a ${type} request from ${start_date} to ${end_date}`,
+            type: 'system',
+            user_id: user.supervisor.id,
+            related_user_id: userId,
+            is_read: false
+          });
+          console.log(`Notification created with type 'system' for supervisor ${user.supervisor.id}`);
+        }
+      } catch (notificationError) {
+        console.error('Error creating notification:', notificationError);
+        // Continue with the request creation even if notification fails
+      }
+    } else {
+      console.log('User has no supervisor, skipping notification');
     }
 
     return res.status(201).json(request);
@@ -195,8 +235,8 @@ exports.updateRequestStatus = async (req, res) => {
 
     // Only allow supervisors of the user or managers to approve/reject
     if (user.role !== 'manager' && requestUser.supervisor_id !== approverId) {
-      return res.status(403).json({ 
-        message: 'Access denied. Only the user\'s supervisor or managers can approve/reject requests.' 
+      return res.status(403).json({
+        message: 'Access denied. Only the user\'s supervisor or managers can approve/reject requests.'
       });
     }
 
@@ -206,14 +246,20 @@ exports.updateRequestStatus = async (req, res) => {
     await request.save();
 
     // Create notification for the user
-    await Notification.create({
-      title: `${status === 'approved' ? 'Request Approved' : 'Request Rejected'}`,
-      message: `Your ${request.type} request from ${request.start_date} to ${request.end_date} has been ${status}`,
-      type: status === 'approved' ? 'request_approved' : 'request_rejected',
-      user_id: request.user_id,
-      related_user_id: approverId,
-      is_read: false
-    });
+    try {
+      await Notification.create({
+        title: `${status === 'approved' ? 'Request Approved' : 'Request Rejected'}`,
+        message: `Your ${request.type} request from ${request.start_date} to ${request.end_date} has been ${status}`,
+        type: status === 'approved' ? 'request_approved' : 'request_rejected',
+        user_id: request.user_id,
+        related_user_id: approverId,
+        is_read: false
+      });
+      console.log(`Notification created for user ${request.user_id} about request ${status}`);
+    } catch (notificationError) {
+      console.error('Error creating notification:', notificationError);
+      // Continue with the request update even if notification fails
+    }
 
     return res.status(200).json(request);
   } catch (error) {

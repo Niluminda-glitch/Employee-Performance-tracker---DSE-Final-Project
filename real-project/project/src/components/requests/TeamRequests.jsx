@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, User } from "lucide-react";
+import { Calendar, Clock, AlertCircle, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import RequestActionButtons from "./RequestActionButtons";
 
 const TeamRequests = ({ isManager = false }) => {
   const { api, user } = useAuth();
@@ -70,7 +71,7 @@ const TeamRequests = ({ isManager = false }) => {
   // Handle request response (approve/reject)
   const handleResponseSubmit = async () => {
     if (!selectedRequest) return;
-    
+
     setIsSubmitting(true);
     try {
       await api.put(`/requests/${selectedRequest.id}/status`, {
@@ -78,10 +79,10 @@ const TeamRequests = ({ isManager = false }) => {
       });
 
       // Update local state
-      setRequests(prev => 
-        prev.map(req => 
-          req.id === selectedRequest.id 
-            ? { ...req, status: responseAction, approver_id: user.id } 
+      setRequests(prev =>
+        prev.map(req =>
+          req.id === selectedRequest.id
+            ? { ...req, status: responseAction, approver_id: user.id }
             : req
         )
       );
@@ -144,8 +145,8 @@ const TeamRequests = ({ isManager = false }) => {
       <CardHeader>
         <CardTitle>Team Requests</CardTitle>
         <CardDescription>
-          {isManager 
-            ? "Manage leave and overtime requests from all employees" 
+          {isManager
+            ? "Manage leave and overtime requests from all employees"
             : "Manage leave and overtime requests from your team members"}
         </CardDescription>
       </CardHeader>
@@ -223,28 +224,15 @@ const TeamRequests = ({ isManager = false }) => {
                           </p>
                         </div>
                       </div>
-                      
+
                       {/* Action buttons for pending requests */}
                       {request.status === "pending" && (
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                            onClick={() => openResponseDialog(request, "rejected")}
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Reject
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700"
-                            onClick={() => openResponseDialog(request, "approved")}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Approve
-                          </Button>
-                        </div>
+                        <RequestActionButtons
+                          request={request}
+                          onApprove={(req) => openResponseDialog(req, "approved")}
+                          onReject={(req) => openResponseDialog(req, "rejected")}
+                          variant="text"
+                        />
                       )}
                     </div>
                   </div>
@@ -324,7 +312,8 @@ const TeamRequests = ({ isManager = false }) => {
               type="button"
               onClick={handleResponseSubmit}
               disabled={isSubmitting}
-              className={responseAction === "approved" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
+              variant="outline"
+              className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
             >
               {isSubmitting
                 ? "Processing..."

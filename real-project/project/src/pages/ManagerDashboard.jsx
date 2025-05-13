@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  BarChart, PieChart, LineChart, Download, Users, ClipboardList, Building,
-  Mail, Briefcase, UserPlus, UserCheck, Edit, CalendarIcon, AlertCircle, UserX, Send, Bell
+  BarChart, LineChart, Users, ClipboardList, Building,
+  Mail, Briefcase, UserCheck, Edit, CalendarIcon, AlertCircle, UserX, Send, Bell
 } from "lucide-react";
 import TopNavigation from "@/components/TopNavigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,7 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import CreateNotificationModal from "@/components/notifications/CreateNotificationModal";
 import TeamRequests from "@/components/requests/TeamRequests";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -67,6 +67,12 @@ const ManagerDashboard = () => {
   const [skills, setSkills] = useState([]);
   const [showQRCode, setShowQRCode] = useState(false);
   const [newUserCredentials, setNewUserCredentials] = useState(null);
+
+  // State for department management
+  const [isAddDepartmentOpen, setIsAddDepartmentOpen] = useState(false);
+  const [isSubmittingDepartment, setIsSubmittingDepartment] = useState(false);
+  const [departmentError, setDepartmentError] = useState(null);
+  const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
 
   // Define the form schema for editing users
   const editUserFormSchema = z.object({
@@ -136,6 +142,21 @@ const ManagerDashboard = () => {
       department_id: "none", // Start with "none" (represents "None")
       supervisor_id: "none", // Start with "none" (represents "None")
       skill_id: "none", // Start with "none" (represents "None")
+    }
+  });
+
+  // Define the form schema for adding departments
+  const departmentFormSchema = z.object({
+    name: z.string().min(2, { message: "Department name must be at least 2 characters." }),
+    description: z.string().optional(),
+  });
+
+  // Initialize the department form
+  const departmentForm = useForm({
+    resolver: zodResolver(departmentFormSchema),
+    defaultValues: {
+      name: "",
+      description: "",
     }
   });
 
@@ -382,6 +403,45 @@ const ManagerDashboard = () => {
     }
   };
 
+  // Function to handle adding a new department
+  const onAddDepartmentSubmit = async (values) => {
+    if (!api) return;
+    setIsSubmittingDepartment(true);
+    setDepartmentError(null);
+    console.log("[ManagerDashboard] Creating new department:", values);
+
+    try {
+      // Call the API to create the department
+      const response = await api.post('/departments', values);
+      console.log("[ManagerDashboard] Department created successfully:", response.data);
+
+      // Add the new department to the local state
+      setDepartments(prevDepartments => [...prevDepartments, response.data]);
+
+      // Close the modal and show success message
+      setIsAddDepartmentOpen(false);
+      toast({
+        title: "Department Created",
+        description: `${values.name} department has been created successfully.`,
+        variant: "default"
+      });
+
+      // Reset form to default values
+      departmentForm.reset();
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || 'Failed to create department.';
+      console.error('[ManagerDashboard] Error creating department:', errorMsg, err.response);
+      setDepartmentError(errorMsg);
+      toast({
+        title: "Department Creation Failed",
+        description: errorMsg,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmittingDepartment(false);
+    }
+  };
+
   // Reset forms when dialogs close
   useEffect(() => {
     if (!isEditUserOpen) {
@@ -407,6 +467,20 @@ const ManagerDashboard = () => {
       }
     }
   }, [isAddUserOpen, addForm]);
+
+  // Reset department form when dialog closes
+  useEffect(() => {
+    if (!isAddDepartmentOpen) {
+      setDepartmentError(null);
+      // Reset the form when dialog closes
+      if (departmentForm) {
+        departmentForm.reset({
+          name: "",
+          description: ""
+        });
+      }
+    }
+  }, [isAddDepartmentOpen, departmentForm]);
 
   // Fetch all users
   useEffect(() => {
@@ -459,6 +533,7 @@ const ManagerDashboard = () => {
       console.log('[ManagerDashboard] Current departments state:', departments);
       console.log('[ManagerDashboard] Current skills state:', skills);
       const fetchDepartments = async () => {
+        setIsLoadingDepartments(true);
         try {
           console.log('[ManagerDashboard] Fetching departments...');
           const response = await api.get('/departments');
@@ -476,6 +551,8 @@ const ManagerDashboard = () => {
           console.error('[ManagerDashboard] Error fetching departments:', err);
           console.error('[ManagerDashboard] Error details:', err.response?.data || err.message);
           // Don't show error to user, just log it
+        } finally {
+          setIsLoadingDepartments(false);
         }
       };
 
@@ -525,12 +602,28 @@ const ManagerDashboard = () => {
     }
   }, [user, api, authLoading, users]);
 
-  // Mock data - would come from API in real implementation
-  const departmentStats = [
-    { department: "Engineering", headcount: 25, performanceScore: 87, openRequests: 5 },
-    { department: "Marketing", headcount: 12, performanceScore: 82, openRequests: 3 },
-    { department: "Customer Support", headcount: 18, performanceScore: 90, openRequests: 2 },
-  ];
+  // Calculate department stats from real data
+  const calculateDepartmentStats = () => {
+    if (!departments || departments.length === 0) {
+      return [];
+    }
+
+    // Map departments to include basic metrics
+    return departments.map(dept => {
+      return {
+        id: dept.id,
+        department: dept.name,
+        description: dept.description,
+        headcount: dept.headcount || 0,
+        created_at: dept.created_at,
+        updated_at: dept.updated_at
+      };
+    });
+  };
+
+
+
+  const departmentStats = calculateDepartmentStats();
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-white via-purple-50 to-amber-50 pb-24 overflow-x-hidden">
@@ -584,14 +677,6 @@ const ManagerDashboard = () => {
             >
               <Bell className="h-4 w-4 mr-2" />
               Create Notification
-            </Button>
-            <Button
-              variant="outline"
-              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 -mr-2"
-              onClick={() => setIsAddUserOpen(true)}
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add User
             </Button>
           </div>
         </div>
@@ -661,32 +746,7 @@ const ManagerDashboard = () => {
           </Card>
         </div>
 
-        {/* Performance Charts */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="shadow-card hover:shadow-card-hover">
-            <CardHeader>
-              <CardTitle>Department Performance</CardTitle>
-              <CardDescription>Performance metrics by department</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[250px] w-full flex items-center justify-center bg-gray-50 rounded-md">
-                <BarChart className="h-16 w-16 text-gray-300" />
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card className="shadow-card hover:shadow-card-hover">
-            <CardHeader>
-              <CardTitle>Resource Allocation</CardTitle>
-              <CardDescription>Employee distribution by project</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[250px] w-full flex items-center justify-center bg-gray-50 rounded-md">
-                <PieChart className="h-16 w-16 text-gray-300" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Tabbed Content */}
         <Tabs defaultValue="users" className="mb-8">
@@ -699,18 +759,9 @@ const ManagerDashboard = () => {
 
           <TabsContent value="users">
             <Card className="shadow-card hover:shadow-card-hover">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>User Management</CardTitle>
-                  <CardDescription>View and manage all users in the system</CardDescription>
-                </div>
-                <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <UserPlus className="h-4 w-4 mr-2" /> Add User
-                    </Button>
-                  </DialogTrigger>
-                </Dialog>
+              <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>View and manage all users in the system</CardDescription>
               </CardHeader>
               <CardContent>
                 {usersError && (
@@ -842,36 +893,52 @@ const ManagerDashboard = () => {
 
           <TabsContent value="departments">
             <Card className="shadow-card hover:shadow-card-hover">
-              <CardHeader>
-                <CardTitle>Department Performance</CardTitle>
-                <CardDescription>Key metrics by department</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Department Management</CardTitle>
+                  <CardDescription>View and manage departments</CardDescription>
+                </div>
+                <Button
+                  onClick={() => setIsAddDepartmentOpen(true)}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  Add Department
+                </Button>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {departmentStats.map((dept, index) => (
-                    <div key={index} className="border rounded-md p-4">
-                      <div className="flex flex-col md:flex-row justify-between md:items-center">
-                        <div>
-                          <h3 className="font-medium text-lg">{dept.department}</h3>
-                          <p className="text-sm text-muted-foreground">Headcount: {dept.headcount}</p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 mt-4 md:mt-0">
+                {isLoadingDepartments ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-purple-500"></div>
+                    <span className="ml-2 text-purple-700">Loading departments...</span>
+                  </div>
+                ) : departmentStats.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-md">
+                    <Building className="h-10 w-10 text-gray-400 mx-auto mb-2" />
+                    <h3 className="text-lg font-medium text-gray-900">No departments found</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      There are no departments in the system yet. Click "Add Department" to create one.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {departmentStats.map((dept) => (
+                      <div key={dept.id} className="border rounded-md p-4">
+                        <div className="flex flex-col md:flex-row justify-between md:items-center">
                           <div>
-                            <p className="text-sm text-muted-foreground">Performance Score</p>
-                            <p className="font-medium text-lg">{dept.performanceScore}%</p>
+                            <h3 className="font-medium text-lg">{dept.department}</h3>
+                            <p className="text-sm text-muted-foreground">Headcount: {dept.headcount}</p>
+                            {dept.description && (
+                              <p className="text-sm text-muted-foreground mt-1 max-w-md">{dept.description}</p>
+                            )}
                           </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Open Requests</p>
-                            <p className="font-medium text-lg">{dept.openRequests}</p>
-                          </div>
+                          <Button variant="outline" size="sm" className="mt-4 md:mt-0">
+                            View Details
+                          </Button>
                         </div>
-                        <Button variant="outline" size="sm" className="mt-4 md:mt-0">
-                          View Details
-                        </Button>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -1349,6 +1416,86 @@ const ManagerDashboard = () => {
         open={createNotificationOpen}
         onOpenChange={setCreateNotificationOpen}
       />
+
+      {/* Add Department Dialog */}
+      <Dialog open={isAddDepartmentOpen} onOpenChange={setIsAddDepartmentOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New Department</DialogTitle>
+            <DialogDescription>
+              Create a new department in the organization.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...departmentForm}>
+            <form onSubmit={departmentForm.handleSubmit(onAddDepartmentSubmit)} className="space-y-4 py-2">
+              {departmentError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
+                  <p className="text-sm">{departmentError}</p>
+                </div>
+              )}
+
+              {/* Department Name Field */}
+              <FormField
+                control={departmentForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Department Name *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Engineering, Marketing, HR" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Department Description Field */}
+              <FormField
+                control={departmentForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Brief description of the department" {...field} value={field.value || ''} />
+                    </FormControl>
+                    <FormDescription>
+                      Optional: Provide a short description of the department's function.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter className="pt-4">
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setIsAddDepartmentOpen(false)}
+                  disabled={isSubmittingDepartment}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmittingDepartment}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  {isSubmittingDepartment ? (
+                    <>
+                      <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-b-transparent border-white"></div>
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Department'
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       {/* QR Code Modal */}
       <Dialog open={showQRCode} onOpenChange={setShowQRCode}>

@@ -25,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import '../styles/dashboard-float.css'; // Floating background shapes
+import TeamManagementCard from "@/components/TeamManagementCard";
 
 // Form Handling & Validation
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -106,6 +107,9 @@ const SupervisorDashboard = () => {
     id: null,
     name: ''
   });
+
+  // State for team management card
+  const [isTeamManagementOpen, setIsTeamManagementOpen] = useState(false);
 
   // --- Form Schema Definition (using Zod) ---
   const taskFormSchema = z.object({
@@ -473,10 +477,7 @@ const SupervisorDashboard = () => {
                   </Button>
                   <Button
                     size="sm"
-                    onClick={() => toast({
-                      title: "Team Management",
-                      description: "Full team management would be available here.",
-                    })}
+                    onClick={() => setIsTeamManagementOpen(true)}
                   >
                     Manage Team
                   </Button>
@@ -976,6 +977,12 @@ const SupervisorDashboard = () => {
         onOpenChange={setIsTasksCardOpen}
         employeeId={selectedEmployeeForTasks.id}
         employeeName={selectedEmployeeForTasks.name}
+      />
+
+      {/* Team Management Card */}
+      <TeamManagementCard
+        open={isTeamManagementOpen}
+        onOpenChange={setIsTeamManagementOpen}
       />
     </div>
   );

@@ -1,12 +1,29 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Home, AlertTriangle } from 'lucide-react';
 import ProfileFloatingElements from '@/components/ProfileFloatingElements';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
+import { getDashboardPathForRole } from '@/lib/auth';
 
 export const NotFound = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    // If user is authenticated, redirect to their dashboard after a short delay
+    if (isAuthenticated && user) {
+      const timer = setTimeout(() => {
+        const dashboardPath = getDashboardPathForRole(user.role);
+        navigate(dashboardPath);
+      }, 5000); // 5 second delay before auto-redirect
+
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, user, navigate]);
+
   useEffect(() => {
     const fingersBack = document.querySelectorAll('#fingersBackL, #fingersBackR');
     const fingersFront = document.querySelectorAll('#fingersFrontL, #fingersFrontR');
@@ -64,12 +81,17 @@ export const NotFound = () => {
               </motion.div>
               <CardTitle className="text-3xl md:text-4xl text-center font-bold text-indigo-900 drop-shadow">404 - Not Found</CardTitle>
               <CardDescription className="text-center text-base text-indigo-800/80 mt-2">Oops! The page you’re looking for doesn’t exist.</CardDescription>
+              {isAuthenticated && user && (
+                <CardDescription className="text-center text-sm text-indigo-600 mt-1">
+                  You'll be redirected to your dashboard in a few seconds...
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4 relative z-10">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.7 }}>
                 <Button asChild variant="gradient" size="lg" className="mt-2">
-                  <Link to="/">
-                    <Home className="w-5 h-5" /> Go Home
+                  <Link to={isAuthenticated && user ? getDashboardPathForRole(user.role) : "/"}>
+                    <Home className="w-5 h-5" /> {isAuthenticated && user ? "Go to Dashboard" : "Go Home"}
                   </Link>
                 </Button>
               </motion.div>

@@ -43,10 +43,15 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 // Create a stable axios instance outside the component
+// Get token from localStorage if available
+const storedToken = localStorage.getItem('token');
+
 const api = axios.create({
   baseURL: 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json',
+    // Add token to headers if available
+    ...(storedToken ? { 'x-auth-token': storedToken } : {})
   },
 });
 
@@ -56,10 +61,22 @@ api.interceptors.response.use(
   (error) => {
     // Handle 401 Unauthorized errors (token expired or invalid)
     if (error.response && error.response.status === 401) {
-      // Clear token and user data
-      localStorage.removeItem('token');
-      // Redirect to login page
-      window.location.href = '/auth';
+      console.log("[AuthContext] 401 Unauthorized error detected in interceptor");
+
+      // Only clear token and redirect if we're not already on the auth page
+      // This prevents redirect loops
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/' && currentPath !== '/auth' && currentPath !== '/auth/callback') {
+        console.log("[AuthContext] Not on auth page, clearing token and redirecting");
+        // Clear token and user data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+
+        // Redirect to login page
+        window.location.href = '/';
+      } else {
+        console.log("[AuthContext] Already on auth page, not redirecting");
+      }
     }
     return Promise.reject(error);
   }
@@ -105,10 +122,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Load user data on mount or when token changes
   const loadUser = useCallback(async () => {
     console.log(`[AuthContext] loadUser effect running. Current token: ${token ? 'Exists' : 'None'}`);
-    if (token) {
-      setAuthToken(token); // Ensure header is set with the current token state
+
+    // Try to get token from localStorage if it's not in state
+    // This helps with page refreshes where state is lost but localStorage persists
+    const storedToken = localStorage.getItem('token');
+    const effectiveToken = token || storedToken;
+
+    if (effectiveToken) {
+      // If we found a token in localStorage but not in state, update state
+      if (!token && storedToken) {
+        console.log("[AuthContext] loadUser: Found token in localStorage but not in state, updating state");
+        setToken(storedToken);
+      }
+
+      setAuthToken(effectiveToken); // Ensure header is set with the current token
       setIsLoading(true); // Set loading true while checking
       setError(null);
+
       try {
         console.log("[AuthContext] loadUser: Calling GET /users/me");
         const res = await api.get('/users/me'); // Use the single 'api' instance
@@ -123,22 +153,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       } catch (err: any) {
         console.error("[AuthContext] loadUser: Failed.", err.response?.data || err.message);
+
+        // Check if we're on the auth page already
+        const currentPath = window.location.pathname;
+        const isAuthPage = currentPath === '/' || currentPath === '/auth' || currentPath === '/auth/callback';
+
         // Only clear token/user if error indicates invalid token (e.g., 401)
         if (err.response?.status === 401 || err.response?.status === 403) {
+          console.log("[AuthContext] loadUser: 401/403 error, clearing token and user");
           setAuthToken(null); // Remove invalid token
           setToken(null);     // Clear token state
           setUser(null);      // Clear user state
+
+          // Only redirect if we're not already on an auth page
+          if (!isAuthPage) {
+            console.log("[AuthContext] loadUser: Not on auth page, redirecting to login");
+            window.location.href = '/';
+          }
         } else {
-          setError("Failed to verify session."); // Keep token for potential retry? Or clear anyway? Let's clear.
-          setAuthToken(null);
-          setToken(null);
-          setUser(null);
+          // For other errors, we might want to retry or just show an error
+          console.log("[AuthContext] loadUser: Non-auth error, setting error state");
+          setError("Failed to verify session. Please try refreshing the page.");
+
+          // For network errors or server errors, we might want to keep the token
+          // and let the user retry, but for now let's clear it to be safe
+          if (err.response?.status >= 500 || !err.response) {
+            console.log("[AuthContext] loadUser: Server or network error, keeping token for retry");
+            // Keep token but set error state
+          } else {
+            console.log("[AuthContext] loadUser: Other client error, clearing token");
+            setAuthToken(null);
+            setToken(null);
+            setUser(null);
+          }
         }
       } finally {
         setIsLoading(false); // Done loading
       }
     } else {
       // No token, ensure we are not loading and user is null
+      console.log("[AuthContext] loadUser: No token found, clearing state");
       setAuthToken(null); // Ensure headers/LS are clear
       setUser(null);
       setIsLoading(false);
@@ -262,6 +316,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     console.log("[AuthContext] logout: Token state set to null.");
     toast.info('You have been logged out');
+
+    // Redirect to the login page
+    window.location.href = '/';
   }, []); // No dependencies needed
 
   // Update profile function
@@ -529,6 +586,22 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element, require
 
   // Not authenticated
   if (!isAuthenticated) {
+    console.log('[ProtectedRoute] User not authenticated, redirecting to auth page');
+
+    // Check if there's a token in localStorage but not in state
+    // This can happen on page refresh where state is lost but localStorage persists
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      console.log('[ProtectedRoute] Found token in localStorage but not authenticated in state');
+      // Instead of redirecting immediately, reload the page to trigger a fresh auth check
+      window.location.reload();
+      return (
+        <div className="min-h-screen w-full flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-700"></div>
+        </div>
+      );
+    }
+
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 

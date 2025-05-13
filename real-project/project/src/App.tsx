@@ -12,12 +12,14 @@ import SupervisorDashboard from "./pages/SupervisorDashboard";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import Profile from "./pages/Profile";
 import FindMentor from "./pages/FindMentor";
+import TeamRequestsPage from "./pages/TeamRequestsPage";
 import Wellbeing from "./pages/Wellbeing";
 import Notifications from "./pages/Notifications";
 import TeamTasks from "./pages/TeamTasks";
 import TeamManagement from "./pages/TeamManagement";
 import Analytics from "./pages/Analytics";
 import LoadingDemo from "./pages/LoadingDemo";
+import RefreshPage from "./pages/RefreshPage";
 import { AuthProvider, ProtectedRoute } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { CursorProvider, useCursor } from "./context/CursorContext";
@@ -50,9 +52,11 @@ const AppContent = () => {
     '/notifications',
     '/task-workflow',
     '/team-tasks',
+    '/team-requests',
     '/analytics',
     '/team-management',
-    '/loading-demo'
+    '/loading-demo',
+    '/refresh-page'
   ];
 
   // Determine if cursor effect should be disabled on certain pages
@@ -74,6 +78,7 @@ const AppContent = () => {
           <Route path="/" element={<Index />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/loading-demo" element={<LoadingDemo />} />
+          <Route path="/refresh-page" element={<RefreshPage />} />
 
           {/* Role-specific dashboards */}
           <Route
@@ -117,6 +122,10 @@ const AppContent = () => {
           <Route
             path="/team-tasks"
             element={<ProtectedRoute element={<TeamTasks />} requiredRole="supervisor" />}
+          />
+          <Route
+            path="/team-requests"
+            element={<ProtectedRoute element={<TeamRequestsPage />} requiredRole={["supervisor", "manager"]} />}
           />
           <Route
             path="/analytics"

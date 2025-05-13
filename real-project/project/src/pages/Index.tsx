@@ -61,6 +61,18 @@ const Index = () => {
   useEffect(() => {
     console.log('[Index] Auth state changed:', { isAuthenticated, user, authLoading, isFirstLogin });
 
+    // Check if we have a token in localStorage but auth state doesn't reflect it
+    // This can happen on page refresh where React state is lost but localStorage persists
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+
+    if (storedToken && !isAuthenticated && !authLoading) {
+      console.log('[Index] Found token in localStorage but not authenticated in state, reloading');
+      // Instead of redirecting immediately, reload the page to trigger a fresh auth check
+      window.location.reload();
+      return;
+    }
+
     if (isAuthenticated && user && !authLoading) {
       if (isFirstLogin) {
         console.log('[Index] User needs to complete first-time setup');

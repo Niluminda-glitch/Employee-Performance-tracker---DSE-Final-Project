@@ -6,7 +6,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
 import { toast } from "sonner";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  BarChart, Bar,
+  LineChart, Line,
+  PieChart, Pie, Cell,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  AreaChart, Area,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 import TopNavigation from "../components/TopNavigation";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, useSpring } from "framer-motion";
@@ -79,7 +86,19 @@ const Analytics = () => {
           setTeamMembers([user]);
           return;
         }
-        const response = await api.get('/supervisor/team');
+
+        // Use different endpoints based on user role
+        let response;
+        if (user.role === 'manager') {
+          // Managers can see all employees
+          console.log("Manager role detected, fetching all users");
+          response = await api.get('/manager/users');
+        } else {
+          // Supervisors see only their team members
+          console.log("Supervisor role detected, fetching team members");
+          response = await api.get('/supervisor/team');
+        }
+
         console.log("Team members response:", response.data);
         setTeamMembers(response.data || []);
         if (response.data && response.data.length > 0) {
@@ -117,19 +136,121 @@ const Analytics = () => {
     }
   }, [selectedUserId]);
 
+  // Helper function to calculate days between two dates (inclusive)
+  const calculateDaysBetween = (startDate, endDate) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+    return diffDays;
+  };
+
+  // Fetch all requests for a user and calculate leave/overtime stats
+  const fetchUserRequests = async (userId) => {
+    try {
+      console.log("Fetching requests for user:", userId);
+
+      // Use the appropriate endpoint based on the user's role
+      let requests = [];
+
+      if (user.role === 'manager') {
+        // Managers can see all requests
+        const allRequestsResponse = await api.get('/requests/all');
+        const allRequests = allRequestsResponse.data;
+        // Filter requests for the specific user
+        requests = allRequests.filter(req => req.user_id === userId);
+      } else if (user.role === 'supervisor') {
+        // Supervisors can see team requests
+        const teamRequestsResponse = await api.get('/requests/team');
+        const teamRequests = teamRequestsResponse.data;
+        // Filter requests for the specific user
+        requests = teamRequests.filter(req => req.user_id === userId);
+      } else {
+        // Employees can only see their own requests
+        if (user.id === userId) {
+          const myRequestsResponse = await api.get('/requests/my');
+          requests = myRequestsResponse.data;
+        } else {
+          // If an employee is trying to access another user's requests, return empty
+          return {
+            userId,
+            approvedLeaveRequests: 0,
+            approvedOvertimeRequests: 0,
+            totalLeaveDays: 0,
+            totalOvertimeHours: 0
+          };
+        }
+      }
+
+      console.log("User requests:", requests);
+
+      // Calculate leave and overtime stats
+      let totalLeaveDays = 0;
+      let totalOvertimeHours = 0;
+      let approvedLeaveRequests = 0;
+      let approvedOvertimeRequests = 0;
+
+      requests.forEach(request => {
+        if (request.status === 'approved') {
+          if (request.type === 'leave') {
+            approvedLeaveRequests++;
+            totalLeaveDays += calculateDaysBetween(request.start_date, request.end_date);
+          } else if (request.type === 'overtime') {
+            approvedOvertimeRequests++;
+            totalOvertimeHours += request.hours || 0;
+          }
+        }
+      });
+
+      return {
+        userId,
+        approvedLeaveRequests,
+        approvedOvertimeRequests,
+        totalLeaveDays,
+        totalOvertimeHours
+      };
+    } catch (error) {
+      console.error("Error fetching user requests:", error);
+      // Return default values if there's an error
+      return {
+        userId,
+        approvedLeaveRequests: 0,
+        approvedOvertimeRequests: 0,
+        totalLeaveDays: 0,
+        totalOvertimeHours: 0
+      };
+    }
+  };
+
   const fetchUserStats = async (userId) => {
     setLoading(true);
     try {
       console.log("Fetching stats for user:", userId);
+
+      // Fetch task stats
       const taskResponse = await api.get(`/analytics/user/${userId}/task-stats`);
       console.log("Raw task stats response:", taskResponse.data);
       setTaskStats(taskResponse.data);
-      const leaveResponse = await api.get(`/analytics/user/${userId}/leave-overtime`);
-      console.log("Raw leave stats response:", leaveResponse.data);
-      setLeaveStats(leaveResponse.data);
+
+      // Fetch leave/overtime stats using our custom function
+      try {
+        const leaveOvertimeStats = await fetchUserRequests(userId);
+        console.log("Custom leave/overtime stats:", leaveOvertimeStats);
+        setLeaveStats(leaveOvertimeStats);
+      } catch (leaveError) {
+        console.error("Error fetching leave/overtime stats:", leaveError);
+        // Fallback to the original endpoint
+        const leaveResponse = await api.get(`/analytics/user/${userId}/leave-overtime`);
+        console.log("Raw leave stats response:", leaveResponse.data);
+        setLeaveStats(leaveResponse.data);
+      }
+
+      // Fetch task completion rate
       const completionRateResponse = await api.get(`/analytics/user/${userId}/task-completion-rate`);
       console.log("Raw task completion rate response:", completionRateResponse.data);
       setTaskCompletionRate(completionRateResponse.data);
+
+      // Fetch user skills
       const userSkillsResponse = await api.get(`/analytics/user/${userId}/user-skills`);
       console.log("Raw user skills response:", userSkillsResponse.data);
       setUserSkills(userSkillsResponse.data);
@@ -1009,57 +1130,122 @@ const Analytics = () => {
           className=""
           data-aos="fade-up"
         >
-          <Card className="bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
+          <Card className="bg-white border border-gray-200 shadow-md rounded-lg overflow-hidden">
             <CardHeader className="pb-3 border-b border-gray-100 bg-gray-50">
               <CardTitle className="text-lg font-semibold text-gray-900">Team Overview</CardTitle>
               <CardDescription className="text-gray-600">Key team performance metrics</CardDescription>
             </CardHeader>
             <CardContent className="pt-5 pb-5">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-5 rounded-md border border-gray-200 shadow-sm">
-                  <div className="flex items-center mb-2">
-                    <div className="w-10 h-10 rounded-md bg-blue-100 flex items-center justify-center mr-3">
-                      <Users className="w-5 h-5 text-blue-600" />
+                <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center mb-3">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                      <Users className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-600">Team Members</p>
+                      <p className="text-2xl font-bold text-gray-900">{teamStats.totalTeamMembers}</p>
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">{teamStats.totalTeamMembers}</p>
+                  <div className="mt-2 text-xs text-gray-500">
+                    {teamStats.totalTeamMembers > 3 ? 'Large team' : 'Small team'}
+                  </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-md border border-gray-200 shadow-sm">
-                  <div className="flex items-center mb-2">
-                    <div className="w-10 h-10 rounded-md bg-green-100 flex items-center justify-center mr-3">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
+                <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center mb-3">
+                    <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-600">Avg. Completion</p>
+                      <p className="text-2xl font-bold text-gray-900">{teamStats.avgCompletionRate}%</p>
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">{teamStats.avgCompletionRate}%</p>
+                  <div className="bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <motion.div
+                      className="h-2 rounded-full"
+                      style={{
+                        background: 'linear-gradient(90deg, #4ade80dd, #4ade80)',
+                        boxShadow: '0 0 8px rgba(74, 222, 128, 0.5)'
+                      }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${teamStats.avgCompletionRate}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                    />
+                  </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-md border border-gray-200 shadow-sm">
-                  <div className="flex items-center mb-2">
-                    <div className="w-10 h-10 rounded-md bg-purple-100 flex items-center justify-center mr-3">
-                      <Clock className="w-5 h-5 text-purple-600" />
+                <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center mb-3">
+                    <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                      <Clock className="w-6 h-6 text-purple-600" />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-600">Avg. On-Time</p>
+                      <p className="text-2xl font-bold text-gray-900">{teamStats.avgOnTimeRate}%</p>
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">{teamStats.avgOnTimeRate}%</p>
+                  <div className="bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <motion.div
+                      className="h-2 rounded-full"
+                      style={{
+                        background: 'linear-gradient(90deg, #8b5cf6dd, #8b5cf6)',
+                        boxShadow: '0 0 8px rgba(139, 92, 246, 0.5)'
+                      }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${teamStats.avgOnTimeRate}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Team Performance Chart */}
+              <div className="mt-8 bg-white p-4 rounded-xl border border-gray-200 shadow-md">
+                <h4 className="text-sm font-medium text-gray-700 mb-4">Team Performance Comparison</h4>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={getTeamComparisonData()}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="name" />
+                      <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                      <Tooltip
+                        formatter={(value) => [`${value}%`, '']}
+                        contentStyle={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="Completion Rate" fill="#4ade80" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="On-Time Rate" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
 
               {/* Summary */}
               <div className="mt-6 pt-4 border-t border-gray-200">
-                <div className="flex justify-between items-center text-sm text-gray-700">
-                  <span>Team Performance:</span>
-                  <span className="font-medium text-blue-600">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Team Performance:</span>
+                  <span className={`font-medium text-sm px-3 py-1 rounded-full ${
+                    teamStats.avgCompletionRate > 70
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-amber-100 text-amber-800'
+                  }`}>
                     {teamStats.avgCompletionRate > 70 ? 'Above Average' : 'Needs Improvement'}
                   </span>
+                </div>
+                <div className="mt-2 text-sm text-gray-600">
+                  {teamStats.avgCompletionRate > 70
+                    ? 'Your team is performing well above average. Keep up the good work!'
+                    : 'Your team could use some improvement in task completion rates. Consider additional training or resources.'}
                 </div>
               </div>
             </CardContent>
@@ -1075,64 +1261,154 @@ const Analytics = () => {
           data-aos="fade-up"
           data-aos-delay="200"
         >
-          <Card className="bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
+          <Card className="bg-white border border-gray-200 shadow-md rounded-lg overflow-hidden">
             <CardHeader className="pb-3 border-b border-gray-100 bg-gray-50">
               <CardTitle className="text-lg font-semibold text-gray-900">Team Member Performance</CardTitle>
               <CardDescription className="text-gray-600">Individual metrics for each team member</CardDescription>
             </CardHeader>
             <CardContent className="pt-5 pb-5 space-y-6">
+              {/* Team Performance Metrics */}
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-md">
+                <h4 className="text-sm font-medium text-gray-700 mb-4">Team Performance Overview</h4>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={teamStats.memberStats.map(member => ({
+                        name: member.userName.split(' ')[0],
+                        'Completion Rate': member.completionRate,
+                        'On-Time Rate': member.onTimeRate
+                      }))}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="name" />
+                      <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                      <Tooltip
+                        formatter={(value) => [`${value}%`, '']}
+                        contentStyle={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="Completion Rate"
+                        stroke="#4ade80"
+                        strokeWidth={2}
+                        activeDot={{ r: 8 }}
+                        dot={{ r: 4, strokeWidth: 2, fill: '#fff' }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="On-Time Rate"
+                        stroke="#8b5cf6"
+                        strokeWidth={2}
+                        activeDot={{ r: 8 }}
+                        dot={{ r: 4, strokeWidth: 2, fill: '#fff' }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
               {/* Team performance summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
-                <div className="bg-gray-50 p-3 rounded-md border border-gray-200 flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Top Performer</span>
-                  <span className="text-sm font-bold text-gray-900">
-                    {teamStats.memberStats.reduce((prev, current) =>
-                      (prev.completionRate > current.completionRate) ? prev : current
-                    ).userName.split(' ')[0]}
-                  </span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center mb-2">
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Top Performer</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {teamStats.memberStats.reduce((prev, current) =>
+                          (prev.completionRate > current.completionRate) ? prev : current
+                        ).userName.split(' ')[0]}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-gray-50 p-3 rounded-md border border-gray-200 flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Avg. Skills</span>
-                  <span className="text-sm font-bold text-gray-900">
-                    {Math.round(teamStats.memberStats.reduce((sum, member) => sum + member.skillCount, 0) / teamStats.memberStats.length)}
-                  </span>
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center mb-2">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Avg. Skills</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {Math.round(teamStats.memberStats.reduce((sum, member) => sum + member.skillCount, 0) / teamStats.memberStats.length)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-gray-50 p-3 rounded-md border border-gray-200 flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Total Tasks</span>
-                  <span className="text-sm font-bold text-gray-900">
-                    {teamStats.memberStats.reduce((sum, member) => sum + member.totalTasks, 0)}
-                  </span>
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center mb-2">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Total Tasks</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {teamStats.memberStats.reduce((sum, member) => sum + member.totalTasks, 0)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Team member cards */}
               <div className="space-y-5">
                 {teamStats.memberStats.map((member, index) => (
-                  <div
+                  <motion.div
                     key={member.userId || index}
-                    className="bg-white p-5 rounded-md border border-gray-200 shadow-sm"
+                    className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1, duration: 0.4 }}
                   >
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-3">
-                      <div>
-                        <h4 className="font-medium text-gray-900">{member.userName}</h4>
-                        <p className="text-sm text-gray-600">{member.jobTitle || 'Team Member'}</p>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg mr-4">
+                          {member.userName.split(' ').map(name => name[0]).join('')}
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900 text-lg">{member.userName}</h4>
+                          <p className="text-sm text-gray-600">{member.jobTitle || 'Team Member'}</p>
+                        </div>
                       </div>
                       <div className="flex items-center">
-                        <div className="px-3 py-1 rounded-md bg-green-100 text-green-800 font-medium text-sm">
+                        <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          member.completionRate > 75 ? 'bg-green-100 text-green-800 border border-green-200' :
+                          member.completionRate > 50 ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                          'bg-amber-100 text-amber-800 border border-amber-200'
+                        }`}>
                           {member.completionRate}% Completion
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                       <div>
                         <div className="flex justify-between text-xs text-gray-600 mb-1">
                           <span>Tasks</span>
                           <span>{member.completedTasks} / {member.totalTasks}</span>
                         </div>
-                        <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden">
                           <motion.div
-                            className="h-2 bg-green-500 rounded-full"
+                            className="h-2.5 rounded-full"
+                            style={{
+                              background: 'linear-gradient(90deg, #4ade80dd, #4ade80)',
+                              boxShadow: '0 0 8px rgba(74, 222, 128, 0.5)'
+                            }}
                             initial={{ width: 0 }}
                             animate={{ width: `${(member.completedTasks / Math.max(member.totalTasks, 1)) * 100}%` }}
                             transition={{ duration: 1, ease: "easeOut" }}
@@ -1145,9 +1421,13 @@ const Analytics = () => {
                           <span>On-time</span>
                           <span>{member.onTimeRate}%</span>
                         </div>
-                        <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden">
                           <motion.div
-                            className="h-2 bg-blue-500 rounded-full"
+                            className="h-2.5 rounded-full"
+                            style={{
+                              background: 'linear-gradient(90deg, #60a5fadd, #60a5fa)',
+                              boxShadow: '0 0 8px rgba(96, 165, 250, 0.5)'
+                            }}
                             initial={{ width: 0 }}
                             animate={{ width: `${member.onTimeRate}%` }}
                             transition={{ duration: 1, ease: "easeOut" }}
@@ -1160,9 +1440,13 @@ const Analytics = () => {
                           <span>Skills</span>
                           <span>{member.skillCount}</span>
                         </div>
-                        <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden">
                           <motion.div
-                            className="h-2 bg-purple-500 rounded-full"
+                            className="h-2.5 rounded-full"
+                            style={{
+                              background: 'linear-gradient(90deg, #8b5cf6dd, #8b5cf6)',
+                              boxShadow: '0 0 8px rgba(139, 92, 246, 0.5)'
+                            }}
                             initial={{ width: 0 }}
                             animate={{ width: `${Math.min(100, (member.skillCount / 10) * 100)}%` }}
                             transition={{ duration: 1, ease: "easeOut" }}
@@ -1171,12 +1455,21 @@ const Analytics = () => {
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap justify-between text-xs text-gray-600 pt-2 border-t border-gray-100">
-                      <span>Leave: {member.totalLeaveDays} days</span>
-                      <span>Overtime: {member.totalOvertimeHours} hrs</span>
-                      <span>Email: {member.email}</span>
+                    <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100">
+                      <div className="text-center">
+                        <p className="text-xs text-gray-500">Leave</p>
+                        <p className="text-sm font-semibold text-gray-700">{member.totalLeaveDays} days</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-gray-500">Overtime</p>
+                        <p className="text-sm font-semibold text-gray-700">{member.totalOvertimeHours} hrs</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-gray-500">Contact</p>
+                        <p className="text-sm font-semibold text-gray-700 truncate" title={member.email}>{member.email}</p>
+                      </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </CardContent>
@@ -1188,25 +1481,59 @@ const Analytics = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
-          className="flex justify-end gap-4 flex-row mt-10 mb-4"
+          className="bg-white p-6 rounded-xl border border-gray-200 shadow-md mb-6"
         >
-          <Button
-            variant="outline"
-            onClick={handleGenerateReport}
-            disabled={generatingReport || !teamStats}
-            className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors flex items-center gap-2"
-          >
-            <FileText className="h-4 w-4" />
-            {generatingReport ? 'Generating...' : 'Generate Team Report'}
-          </Button>
-          <Button
-            onClick={handleDownloadPDF}
-            disabled={generatingReport || !teamStats}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            {generatingReport ? 'Exporting...' : 'Export Team PDF'}
-          </Button>
+          <h3 className="text-xl font-bold mb-4 text-gray-800">Export Options</h3>
+          <p className="text-sm text-gray-600 mb-4">Generate reports or export data for your team's performance metrics</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <motion.div
+              whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+              className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all"
+            >
+              <div className="flex items-start mb-3">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                  <FileText className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-800">Text Report</h4>
+                  <p className="text-xs text-gray-500 mt-1">Generate a detailed text report with all team metrics</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                onClick={handleGenerateReport}
+                disabled={generatingReport || !teamStats}
+                className="w-full bg-white border border-indigo-200 hover:bg-indigo-50 text-indigo-700 font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                {generatingReport ? 'Generating...' : 'Generate Team Report'}
+              </Button>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+              className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all"
+            >
+              <div className="flex items-start mb-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                  <Download className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-800">PDF Export</h4>
+                  <p className="text-xs text-gray-500 mt-1">Export a professional PDF with charts and metrics</p>
+                </div>
+              </div>
+              <Button
+                onClick={handleDownloadPDF}
+                disabled={generatingReport || !teamStats}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {generatingReport ? 'Exporting...' : 'Export Team PDF'}
+              </Button>
+            </motion.div>
+          </div>
         </motion.div>
       </div>
     );
@@ -1337,19 +1664,7 @@ const Analytics = () => {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.5 }}
               >
-                <TabsContent value="individual" className="space-y-8 relative pb-24" ref={individualStatsRef}>
-                  {/* Performance PDF Button positioned at left bottom corner of individual tab */}
-                  <div className="absolute bottom-0 left-0 z-50 p-4 bg-gradient-to-r from-blue-500/20 to-transparent rounded-tr-xl">
-                    <Button
-                      onClick={handleGeneratePerformancePDF}
-                      disabled={generatingReport || !taskStats}
-                      className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-4 px-6 rounded-xl shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-3"
-                      style={{ minWidth: '240px' }}
-                    >
-                      <FileText className="h-6 w-6" />
-                      {generatingReport ? 'Generating...' : `Generate ${getSelectedUserName().replace("'s", "")} Performance PDF`}
-                    </Button>
-                  </div>
+                <TabsContent value="individual" className="space-y-8 relative" ref={individualStatsRef}>
                   {/* User Selection - Clean and professional */}
                   {(user.role === 'supervisor' || user.role === 'manager') && (
                     <motion.div
@@ -1415,45 +1730,100 @@ const Analytics = () => {
                               </div>
                             ) : (
                               <div className="space-y-5">
-                                {getTaskStatusData().map((item, index) => {
-                                  const total = taskStats.totalTasksAssigned || getTaskStatusData().reduce((sum, i) => sum + i.value, 0);
-                                  const percentage = total ? Math.round((item.value / total) * 100) : 0;
-
-                                  // Define status colors
-                                  const statusColors = {
-                                    'Completed': '#4ade80',
-                                    'In Progress': '#60a5fa',
-                                    'Pending': '#f59e0b',
-                                    'Overdue': '#ef4444',
-                                    'Other': '#9ca3af'
-                                  };
-
-                                  const color = statusColors[item.name] || statusColors['Other'];
-
-                                  return (
-                                    <div key={index} className="bg-gray-50 p-4 rounded-md border border-gray-100">
-                                      <div className="flex justify-between items-center mb-2">
-                                        <div className="flex items-center">
-                                          <div
-                                            className="w-3 h-3 rounded-full mr-2"
-                                            style={{ backgroundColor: color }}
-                                          />
-                                          <span className="font-medium text-gray-800">{item.name}</span>
-                                        </div>
-                                        <span className="text-sm font-medium text-gray-700">{item.value} ({percentage}%)</span>
-                                      </div>
-                                      <div className="bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                                        <motion.div
-                                          className="h-2.5 rounded-full"
-                                          style={{ backgroundColor: color }}
-                                          initial={{ width: 0 }}
-                                          animate={{ width: `${percentage}%` }}
-                                          transition={{ duration: 1, ease: "easeOut" }}
+                                {/* Pie Chart for Task Status */}
+                                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-md">
+                                  <h4 className="text-sm font-medium text-gray-700 mb-4">Task Status Distribution</h4>
+                                  <div className="h-64 flex items-center justify-center">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                      <PieChart>
+                                        <Pie
+                                          data={getTaskStatusData()}
+                                          cx="50%"
+                                          cy="50%"
+                                          labelLine={false}
+                                          outerRadius={80}
+                                          fill="#8884d8"
+                                          dataKey="value"
+                                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                        >
+                                          {getTaskStatusData().map((entry, index) => {
+                                            // Define status colors
+                                            const statusColors = {
+                                              'Completed': '#4ade80',
+                                              'In Progress': '#60a5fa',
+                                              'Pending': '#f59e0b',
+                                              'Overdue': '#ef4444',
+                                              'Other': '#9ca3af'
+                                            };
+                                            const color = statusColors[entry.name] || statusColors['Other'];
+                                            return <Cell key={`cell-${index}`} fill={color} />;
+                                          })}
+                                        </Pie>
+                                        <Tooltip
+                                          formatter={(value, name, props) => [`${value} tasks`, name]}
+                                          contentStyle={{
+                                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                            borderRadius: '8px',
+                                            border: '1px solid #e2e8f0',
+                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                          }}
                                         />
+                                        <Legend
+                                          layout="horizontal"
+                                          verticalAlign="bottom"
+                                          align="center"
+                                          wrapperStyle={{ paddingTop: '20px' }}
+                                        />
+                                      </PieChart>
+                                    </ResponsiveContainer>
+                                  </div>
+                                </div>
+
+                                {/* Task Status Bars */}
+                                <div className="space-y-3 mt-4">
+                                  {getTaskStatusData().map((item, index) => {
+                                    const total = taskStats.totalTasksAssigned || getTaskStatusData().reduce((sum, i) => sum + i.value, 0);
+                                    const percentage = total ? Math.round((item.value / total) * 100) : 0;
+
+                                    // Define status colors
+                                    const statusColors = {
+                                      'Completed': '#4ade80',
+                                      'In Progress': '#60a5fa',
+                                      'Pending': '#f59e0b',
+                                      'Overdue': '#ef4444',
+                                      'Other': '#9ca3af'
+                                    };
+
+                                    const color = statusColors[item.name] || statusColors['Other'];
+
+                                    return (
+                                      <div key={index} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex justify-between items-center mb-2">
+                                          <div className="flex items-center">
+                                            <div
+                                              className="w-3 h-3 rounded-full mr-2"
+                                              style={{ backgroundColor: color }}
+                                            />
+                                            <span className="font-medium text-gray-800">{item.name}</span>
+                                          </div>
+                                          <span className="text-sm font-medium text-gray-700">{item.value} ({percentage}%)</span>
+                                        </div>
+                                        <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                                          <motion.div
+                                            className="h-2.5 rounded-full"
+                                            style={{
+                                              background: `linear-gradient(90deg, ${color}dd, ${color})`,
+                                              boxShadow: `0 0 8px ${color}80`
+                                            }}
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${percentage}%` }}
+                                            transition={{ duration: 1, ease: "easeOut" }}
+                                          />
+                                        </div>
                                       </div>
-                                    </div>
-                                  );
-                                })}
+                                    );
+                                  })}
+                                </div>
 
                                 {/* Summary */}
                                 <div className="mt-4 pt-4 border-t border-gray-200">
@@ -1498,24 +1868,86 @@ const Analytics = () => {
                             </div>
                           ) : taskStats ? (
                             <div className="space-y-6">
-                              {/* Completion Rate */}
-                              <div className="bg-gray-50 p-4 rounded-md border border-gray-100">
-                                <div className="flex justify-between items-start mb-2">
-                                  <div>
-                                    <h4 className="font-medium text-gray-800">Completion Rate</h4>
-                                    <p className="text-xs text-gray-500 mt-0.5">{taskStats.tasksCompleted || 0} of {taskStats.totalTasksAssigned || 0} tasks completed</p>
-                                  </div>
-                                  <div className="text-xl font-bold text-gray-900">{taskStats.taskCompletionRate || 0}%</div>
+                              {/* Bar Chart for Completion Metrics */}
+                              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-md">
+                                <h4 className="text-sm font-medium text-gray-700 mb-4">Performance Metrics</h4>
+                                <div className="h-64 flex items-center justify-center">
+                                  <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                      data={[
+                                        {
+                                          name: 'Completion Rate',
+                                          value: taskStats.taskCompletionRate || 0,
+                                          fill: '#4ade80'
+                                        },
+                                        {
+                                          name: 'On-Time Rate',
+                                          value: taskStats.onTimeCompletionRate || 0,
+                                          fill: '#60a5fa'
+                                        }
+                                      ]}
+                                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                                    >
+                                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                      <XAxis dataKey="name" />
+                                      <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                                      <Tooltip
+                                        formatter={(value) => [`${value}%`, 'Rate']}
+                                        contentStyle={{
+                                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                          borderRadius: '8px',
+                                          border: '1px solid #e2e8f0',
+                                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                        }}
+                                      />
+                                      <Legend />
+                                      <Bar
+                                        dataKey="value"
+                                        name="Percentage"
+                                        radius={[4, 4, 0, 0]}
+                                        barSize={60}
+                                        fill="#8884d8"
+                                        label={{
+                                          position: 'top',
+                                          formatter: (value) => `${value}%`,
+                                          fill: '#666',
+                                          fontSize: 12
+                                        }}
+                                      >
+                                        {[
+                                          { name: 'Completion Rate', fill: '#4ade80' },
+                                          { name: 'On-Time Rate', fill: '#60a5fa' }
+                                        ].map((entry, index) => (
+                                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                                        ))}
+                                      </Bar>
+                                    </BarChart>
+                                  </ResponsiveContainer>
                                 </div>
-                                <div className="bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                              </div>
+
+                              {/* Completion Rate */}
+                              <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start mb-3">
+                                  <div>
+                                    <h4 className="font-medium text-gray-800 text-lg">Completion Rate</h4>
+                                    <p className="text-sm text-gray-500 mt-1">{taskStats.tasksCompleted || 0} of {taskStats.totalTasksAssigned || 0} tasks completed</p>
+                                  </div>
+                                  <div className="text-2xl font-bold text-gray-900">{taskStats.taskCompletionRate || 0}%</div>
+                                </div>
+                                <div className="bg-gray-100 rounded-full h-3 overflow-hidden">
                                   <motion.div
-                                    className="h-2.5 bg-green-500 rounded-full"
+                                    className="h-3 rounded-full"
+                                    style={{
+                                      background: 'linear-gradient(90deg, #4ade80dd, #4ade80)',
+                                      boxShadow: '0 0 8px rgba(74, 222, 128, 0.5)'
+                                    }}
                                     initial={{ width: 0 }}
                                     animate={{ width: `${taskStats.taskCompletionRate || 0}%` }}
                                     transition={{ duration: 1, ease: "easeOut" }}
                                   />
                                 </div>
-                                <div className="flex justify-between text-xs text-gray-500 mt-1.5">
+                                <div className="flex justify-between text-xs text-gray-500 mt-2">
                                   <span>0%</span>
                                   <span>50%</span>
                                   <span>100%</span>
@@ -1523,23 +1955,27 @@ const Analytics = () => {
                               </div>
 
                               {/* On-Time Rate */}
-                              <div className="bg-gray-50 p-4 rounded-md border border-gray-100">
-                                <div className="flex justify-between items-start mb-2">
+                              <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start mb-3">
                                   <div>
-                                    <h4 className="font-medium text-gray-800">On-Time Rate</h4>
-                                    <p className="text-xs text-gray-500 mt-0.5">{taskStats.tasksCompletedOnTime || 0} of {taskStats.tasksCompleted || 0} completed on time</p>
+                                    <h4 className="font-medium text-gray-800 text-lg">On-Time Rate</h4>
+                                    <p className="text-sm text-gray-500 mt-1">{taskStats.tasksCompletedOnTime || 0} of {taskStats.tasksCompleted || 0} completed on time</p>
                                   </div>
-                                  <div className="text-xl font-bold text-gray-900">{taskStats.onTimeCompletionRate || 0}%</div>
+                                  <div className="text-2xl font-bold text-gray-900">{taskStats.onTimeCompletionRate || 0}%</div>
                                 </div>
-                                <div className="bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                                <div className="bg-gray-100 rounded-full h-3 overflow-hidden">
                                   <motion.div
-                                    className="h-2.5 bg-blue-500 rounded-full"
+                                    className="h-3 rounded-full"
+                                    style={{
+                                      background: 'linear-gradient(90deg, #60a5fadd, #60a5fa)',
+                                      boxShadow: '0 0 8px rgba(96, 165, 250, 0.5)'
+                                    }}
                                     initial={{ width: 0 }}
                                     animate={{ width: `${taskStats.onTimeCompletionRate || 0}%` }}
                                     transition={{ duration: 1, ease: "easeOut" }}
                                   />
                                 </div>
-                                <div className="flex justify-between text-xs text-gray-500 mt-1.5">
+                                <div className="flex justify-between text-xs text-gray-500 mt-2">
                                   <span>0%</span>
                                   <span>50%</span>
                                   <span>100%</span>
@@ -1548,10 +1984,13 @@ const Analytics = () => {
 
                               {/* Additional Metrics */}
                               {taskStats.avgCompletionTime && (
-                                <div className="bg-white p-4 rounded-md border border-gray-200">
+                                <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                                   <div className="flex justify-between items-center">
-                                    <span className="font-medium text-gray-800">Avg. Completion Time</span>
-                                    <span className="font-bold text-gray-900">{taskStats.avgCompletionTime} days</span>
+                                    <div>
+                                      <h4 className="font-medium text-gray-800 text-lg">Avg. Completion Time</h4>
+                                      <p className="text-sm text-gray-500 mt-1">Average time to complete tasks</p>
+                                    </div>
+                                    <div className="text-2xl font-bold text-gray-900">{taskStats.avgCompletionTime} days</div>
                                   </div>
                                 </div>
                               )}
@@ -1592,53 +2031,139 @@ const Analytics = () => {
                           </div>
                         ) : leaveStats ? (
                           <div className="space-y-6">
-                            {/* Leave Days */}
-                            <div className="bg-gray-50 p-4 rounded-md border border-gray-100">
-                              <div className="flex justify-between items-start mb-2">
-                                <h4 className="font-medium text-gray-800">Leave Days</h4>
-                                <p className="font-bold text-gray-900">{leaveStats.totalLeaveDays || 0} days</p>
+                            {/* Bar Chart for Leave & Overtime */}
+                            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-md">
+                              <h4 className="text-sm font-medium text-gray-700 mb-4">Leave & Overtime Comparison</h4>
+                              <div className="h-64 flex items-center justify-center">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart
+                                    data={[
+                                      {
+                                        name: 'Leave Days',
+                                        value: leaveStats.totalLeaveDays || 0,
+                                        fill: '#8b5cf6'
+                                      },
+                                      {
+                                        name: 'Overtime Hours',
+                                        value: leaveStats.totalOvertimeHours || 0,
+                                        fill: '#f59e0b'
+                                      }
+                                    ]}
+                                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                                  >
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                    <XAxis dataKey="name" />
+                                    <YAxis />
+                                    <Tooltip
+                                      formatter={(value, name) => [
+                                        name === 'Leave Days' ? `${value} days` : `${value} hours`,
+                                        name
+                                      ]}
+                                      contentStyle={{
+                                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                        borderRadius: '8px',
+                                        border: '1px solid #e2e8f0',
+                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                      }}
+                                    />
+                                    <Legend />
+                                    <Bar
+                                      dataKey="value"
+                                      name="Value"
+                                      radius={[4, 4, 0, 0]}
+                                      barSize={60}
+                                      label={{
+                                        position: 'top',
+                                        formatter: (value) => value,
+                                        fill: '#666',
+                                        fontSize: 12
+                                      }}
+                                    >
+                                      {[
+                                        { name: 'Leave Days', fill: '#8b5cf6' },
+                                        { name: 'Overtime Hours', fill: '#f59e0b' }
+                                      ].map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                                      ))}
+                                    </Bar>
+                                  </BarChart>
+                                </ResponsiveContainer>
                               </div>
-                              <div className="bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                            </div>
+
+                            {/* Leave Days */}
+                            <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex justify-between items-start mb-3">
+                                <div>
+                                  <h4 className="font-medium text-gray-800 text-lg">Leave Days</h4>
+                                  <p className="text-sm text-gray-500 mt-1">Total approved leave days</p>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-900">{leaveStats.totalLeaveDays || 0} days</div>
+                              </div>
+                              <div className="bg-gray-100 rounded-full h-3 overflow-hidden">
                                 <motion.div
-                                  className="h-2.5 bg-purple-500 rounded-full"
+                                  className="h-3 rounded-full"
+                                  style={{
+                                    background: 'linear-gradient(90deg, #8b5cf6dd, #8b5cf6)',
+                                    boxShadow: '0 0 8px rgba(139, 92, 246, 0.5)'
+                                  }}
                                   initial={{ width: 0 }}
                                   animate={{ width: `${Math.min(100, (leaveStats.totalLeaveDays || 0) / 0.3)}%` }}
                                   transition={{ duration: 1, ease: "easeOut" }}
                                 />
                               </div>
-                              <div className="flex justify-between text-xs text-gray-500 mt-1.5">
+                              <div className="flex justify-between text-xs text-gray-500 mt-2">
                                 <span>0 days</span>
+                                <span>15 days</span>
                                 <span>30 days</span>
                               </div>
                             </div>
 
                             {/* Overtime Hours */}
-                            <div className="bg-gray-50 p-4 rounded-md border border-gray-100">
-                              <div className="flex justify-between items-start mb-2">
-                                <h4 className="font-medium text-gray-800">Overtime Hours</h4>
-                                <p className="font-bold text-gray-900">{leaveStats.totalOvertimeHours || 0} hrs</p>
+                            <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex justify-between items-start mb-3">
+                                <div>
+                                  <h4 className="font-medium text-gray-800 text-lg">Overtime Hours</h4>
+                                  <p className="text-sm text-gray-500 mt-1">Total approved overtime hours</p>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-900">{leaveStats.totalOvertimeHours || 0} hrs</div>
                               </div>
-                              <div className="bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                              <div className="bg-gray-100 rounded-full h-3 overflow-hidden">
                                 <motion.div
-                                  className="h-2.5 bg-amber-500 rounded-full"
+                                  className="h-3 rounded-full"
+                                  style={{
+                                    background: 'linear-gradient(90deg, #f59e0bdd, #f59e0b)',
+                                    boxShadow: '0 0 8px rgba(245, 158, 11, 0.5)'
+                                  }}
                                   initial={{ width: 0 }}
                                   animate={{ width: `${Math.min(100, (leaveStats.totalOvertimeHours || 0) / 0.6)}%` }}
                                   transition={{ duration: 1, ease: "easeOut" }}
                                 />
                               </div>
-                              <div className="flex justify-between text-xs text-gray-500 mt-1.5">
+                              <div className="flex justify-between text-xs text-gray-500 mt-2">
                                 <span>0 hrs</span>
+                                <span>30 hrs</span>
                                 <span>60 hrs</span>
                               </div>
                             </div>
 
                             {/* Request Summary */}
                             <div className="grid grid-cols-2 gap-4 pt-2">
-                              <div className="bg-white p-4 rounded-md border border-gray-200 text-center">
+                              <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow text-center">
+                                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                </div>
                                 <p className="text-sm text-gray-600 mb-1">Leave Requests</p>
                                 <p className="text-2xl font-bold text-gray-900">{leaveStats.approvedLeaveRequests || 0}</p>
                               </div>
-                              <div className="bg-white p-4 rounded-md border border-gray-200 text-center">
+                              <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow text-center">
+                                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                </div>
                                 <p className="text-sm text-gray-600 mb-1">Overtime Requests</p>
                                 <p className="text-2xl font-bold text-gray-900">{leaveStats.approvedOvertimeRequests || 0}</p>
                               </div>
@@ -1687,44 +2212,99 @@ const Analytics = () => {
                             </div>
                           ) : (
                             <div className="space-y-5">
-                              {getTaskCompletionRateData().map((item, index) => {
-                                const total = taskCompletionRate.totalTasks || getTaskCompletionRateData().reduce((sum, i) => sum + i.value, 0);
-                                const percentage = total ? Math.round((item.value / total) * 100) : 0;
-
-                                // Define status colors
-                                const statusColors = {
-                                  'Completed': '#4ade80',
-                                  'In Progress': '#60a5fa',
-                                  'Pending': '#f59e0b',
-                                  'Other': '#9ca3af'
-                                };
-
-                                const color = statusColors[item.name] || COLORS[index % COLORS.length];
-
-                                return (
-                                  <div key={index} className="bg-gray-50 p-4 rounded-md border border-gray-100">
-                                    <div className="flex justify-between items-center mb-2">
-                                      <div className="flex items-center">
-                                        <div
-                                          className="w-3 h-3 rounded-full mr-2"
-                                          style={{ backgroundColor: color }}
-                                        />
-                                        <span className="font-medium text-gray-800">{item.name}</span>
-                                      </div>
-                                      <span className="text-sm font-medium text-gray-700">{item.value} ({percentage}%)</span>
-                                    </div>
-                                    <div className="bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                                      <motion.div
-                                        className="h-2.5 rounded-full"
-                                        style={{ backgroundColor: color }}
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${percentage}%` }}
-                                        transition={{ duration: 1, ease: "easeOut" }}
+                              {/* Pie Chart for Task Completion Rate */}
+                              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-md">
+                                <h4 className="text-sm font-medium text-gray-700 mb-4">Task Status Distribution</h4>
+                                <div className="h-64 flex items-center justify-center">
+                                  <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                      <Pie
+                                        data={getTaskCompletionRateData()}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        fill="#8884d8"
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                      >
+                                        {getTaskCompletionRateData().map((entry, index) => {
+                                          // Define status colors
+                                          const statusColors = {
+                                            'Completed': '#4ade80',
+                                            'In Progress': '#60a5fa',
+                                            'Pending': '#f59e0b',
+                                            'Other': '#9ca3af'
+                                          };
+                                          const color = statusColors[entry.name] || COLORS[index % COLORS.length];
+                                          return <Cell key={`cell-${index}`} fill={color} stroke="#ffffff" strokeWidth={2} />;
+                                        })}
+                                      </Pie>
+                                      <Tooltip
+                                        formatter={(value, name, props) => [`${value} tasks`, name]}
+                                        contentStyle={{
+                                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                          borderRadius: '8px',
+                                          border: '1px solid #e2e8f0',
+                                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                        }}
                                       />
+                                      <Legend
+                                        layout="horizontal"
+                                        verticalAlign="bottom"
+                                        align="center"
+                                        wrapperStyle={{ paddingTop: '20px' }}
+                                      />
+                                    </PieChart>
+                                  </ResponsiveContainer>
+                                </div>
+                              </div>
+
+                              {/* Task Status Bars */}
+                              <div className="space-y-3 mt-4">
+                                {getTaskCompletionRateData().map((item, index) => {
+                                  const total = taskCompletionRate.totalTasks || getTaskCompletionRateData().reduce((sum, i) => sum + i.value, 0);
+                                  const percentage = total ? Math.round((item.value / total) * 100) : 0;
+
+                                  // Define status colors
+                                  const statusColors = {
+                                    'Completed': '#4ade80',
+                                    'In Progress': '#60a5fa',
+                                    'Pending': '#f59e0b',
+                                    'Other': '#9ca3af'
+                                  };
+
+                                  const color = statusColors[item.name] || COLORS[index % COLORS.length];
+
+                                  return (
+                                    <div key={index} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                      <div className="flex justify-between items-center mb-2">
+                                        <div className="flex items-center">
+                                          <div
+                                            className="w-3 h-3 rounded-full mr-2"
+                                            style={{ backgroundColor: color }}
+                                          />
+                                          <span className="font-medium text-gray-800">{item.name}</span>
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-700">{item.value} ({percentage}%)</span>
+                                      </div>
+                                      <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                                        <motion.div
+                                          className="h-2.5 rounded-full"
+                                          style={{
+                                            background: `linear-gradient(90deg, ${color}dd, ${color})`,
+                                            boxShadow: `0 0 8px ${color}80`
+                                          }}
+                                          initial={{ width: 0 }}
+                                          animate={{ width: `${percentage}%` }}
+                                          transition={{ duration: 1, ease: "easeOut" }}
+                                        />
+                                      </div>
                                     </div>
-                                  </div>
-                                );
-                              })}
+                                  );
+                                })}
+                              </div>
 
                               {/* Summary */}
                               {taskCompletionRate.totalTasks && (
@@ -1773,48 +2353,89 @@ const Analytics = () => {
                         ) : userSkills ? (
                           Array.isArray(userSkills.skills) ? (
                             userSkills.skills.length > 0 ? (
-                              <div className="space-y-4">
-                                {userSkills.skills.map((skill, index) => (
-                                  <div
-                                    key={index}
-                                    className="bg-gray-50 p-4 rounded-md border border-gray-100"
-                                  >
-                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                                      <div>
-                                        <h4 className="font-medium text-gray-900">{skill.skillName}</h4>
-                                        <p className="text-sm text-gray-600 mt-1">{skill.skillDescription}</p>
+                              <div className="space-y-6">
+                                {/* Skills List */}
+                                <div className="space-y-4">
+                                  {userSkills.skills.map((skill, index) => (
+                                    <div
+                                      key={index}
+                                      className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                                    >
+                                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                                        <div>
+                                          <h4 className="font-medium text-gray-900 text-lg">{skill.skillName}</h4>
+                                          <p className="text-sm text-gray-600 mt-1">{skill.skillDescription}</p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                          <span
+                                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                              skill.proficiencyLevel === 'expert' ? 'bg-green-100 text-green-800 border border-green-200' :
+                                              skill.proficiencyLevel === 'intermediate' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                              skill.proficiencyLevel === 'advanced' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
+                                              'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                                            }`}
+                                          >
+                                            {skill.proficiencyLevel || 'beginner'}
+                                          </span>
+                                          {skill.canMentor && (
+                                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 border border-indigo-200">
+                                              Mentor
+                                            </span>
+                                          )}
+                                          {skill.isCertified && (
+                                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                                              Certified
+                                            </span>
+                                          )}
+                                        </div>
                                       </div>
-                                      <div className="flex flex-wrap gap-2">
-                                        <span
-                                          className={`px-2 py-1 rounded-md text-xs font-medium ${
-                                            skill.proficiencyLevel === 'expert' ? 'bg-green-100 text-green-800 border border-green-200' :
-                                            skill.proficiencyLevel === 'intermediate' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
-                                            skill.proficiencyLevel === 'advanced' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
-                                            'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                                          }`}
-                                        >
-                                          {skill.proficiencyLevel || 'beginner'}
-                                        </span>
-                                        {skill.canMentor && (
-                                          <span className="px-2 py-1 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800 border border-indigo-200">
-                                            Mentor
-                                          </span>
-                                        )}
-                                        {skill.isCertified && (
-                                          <span className="px-2 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                                            Certified
-                                          </span>
-                                        )}
+
+                                      {/* Proficiency Bar */}
+                                      <div className="mt-4">
+                                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                                          <span>Proficiency Level</span>
+                                          <span>{skill.proficiencyLevel || 'beginner'}</span>
+                                        </div>
+                                        <div className="bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                                          <motion.div
+                                            className="h-2.5 rounded-full"
+                                            style={{
+                                              background: skill.proficiencyLevel === 'expert' ? 'linear-gradient(90deg, #4ade80dd, #4ade80)' :
+                                                skill.proficiencyLevel === 'advanced' ? 'linear-gradient(90deg, #8b5cf6dd, #8b5cf6)' :
+                                                skill.proficiencyLevel === 'intermediate' ? 'linear-gradient(90deg, #60a5fadd, #60a5fa)' :
+                                                'linear-gradient(90deg, #f59e0bdd, #f59e0b)',
+                                              boxShadow: skill.proficiencyLevel === 'expert' ? '0 0 8px rgba(74, 222, 128, 0.5)' :
+                                                skill.proficiencyLevel === 'advanced' ? '0 0 8px rgba(139, 92, 246, 0.5)' :
+                                                skill.proficiencyLevel === 'intermediate' ? '0 0 8px rgba(96, 165, 250, 0.5)' :
+                                                '0 0 8px rgba(245, 158, 11, 0.5)'
+                                            }}
+                                            initial={{ width: 0 }}
+                                            animate={{
+                                              width: skill.proficiencyLevel === 'expert' ? '100%' :
+                                                skill.proficiencyLevel === 'advanced' ? '75%' :
+                                                skill.proficiencyLevel === 'intermediate' ? '50%' :
+                                                '25%'
+                                            }}
+                                            transition={{ duration: 1, ease: "easeOut" }}
+                                          />
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                ))}
+                                  ))}
 
-                                {/* Summary */}
-                                <div className="mt-4 pt-4 border-t border-gray-200">
-                                  <div className="flex justify-between items-center text-sm text-gray-700">
-                                    <span>Total Skills:</span>
-                                    <span className="font-semibold">{userSkills.skills.length}</span>
+                                  {/* Summary */}
+                                  <div className="mt-4 pt-4 border-t border-gray-200">
+                                    <div className="flex justify-between items-center text-sm text-gray-700">
+                                      <span>Total Skills:</span>
+                                      <span className="font-semibold">{userSkills.skills.length}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm text-gray-700 mt-2">
+                                      <span>Can Mentor:</span>
+                                      <span className="font-semibold">{userSkills.skills.filter(skill => skill.canMentor).length} skills</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm text-gray-700 mt-2">
+                                      <span>Certified:</span>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -1842,6 +2463,47 @@ const Analytics = () => {
                             <span className="text-sm">No skills data available</span>
                           </div>
                         )}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+
+                  {/* Export/Print Buttons for Individual View - Added at the bottom of the page */}
+                  <motion.div
+                    variants={cardItemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="mt-8"
+                    data-aos="fade-up"
+                    data-aos-delay="600"
+                  >
+                    <Card className="bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
+                      <CardHeader className="pb-3 border-b border-gray-100 bg-gray-50">
+                        <CardTitle className="text-lg font-semibold text-gray-900">Export Options</CardTitle>
+                        <CardDescription className="text-gray-600">Generate reports or export performance data</CardDescription>
+                      </CardHeader>
+                      <CardContent className="pt-5 pb-5">
+                        <motion.div
+                          whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                          className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all"
+                        >
+                          <div className="flex items-start mb-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                              <Download className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-gray-800">PDF Export</h4>
+                              <p className="text-xs text-gray-500 mt-1">Export a professional PDF with charts and metrics</p>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={handleGeneratePerformancePDF}
+                            disabled={generatingReport || !taskStats}
+                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            {generatingReport ? 'Generating...' : `Generate ${getSelectedUserName().replace("'s", "")} Performance PDF`}
+                          </Button>
+                        </motion.div>
                       </CardContent>
                     </Card>
                   </motion.div>

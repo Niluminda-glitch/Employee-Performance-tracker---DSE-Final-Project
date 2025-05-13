@@ -4,6 +4,10 @@ const db = require('../models'); // Import models
 const authMiddleware = require('../middleware/authMiddleware');
 const { v4: uuidv4 } = require('uuid');
 
+// Role check middleware
+const roleCheck = require('../middleware/role-check');
+const requireManager = roleCheck(['manager']);
+
 const router = express.Router();
 
 // GET /api/departments - Fetch all departments
@@ -23,15 +27,28 @@ router.get('/', async (req, res) => {
         console.log('[Departments Route] Department.findAll:', typeof db.Department.findAll);
 
         try {
-            // First, try to query the departments table
+            // First, try to query the departments table with all attributes
             const departments = await db.Department.findAll({
-                attributes: ['id', 'name'],
+                attributes: ['id', 'name', 'description', 'created_at', 'updated_at'],
                 order: [['name', 'ASC']]
             });
             console.log(`[Departments Route] Found ${departments ? departments.length : 'null'} departments.`);
 
+            // Get headcount for each department
+            const departmentsWithStats = await Promise.all(departments.map(async (dept) => {
+                const headcount = await db.User.count({
+                    where: { department_id: dept.id }
+                });
+
+                // Return department with headcount
+                return {
+                    ...dept.toJSON(),
+                    headcount
+                };
+            }));
+
             // If we get here, the table exists and we can return the departments
-            res.json(departments || []); // Send empty array if null/undefined
+            res.json(departmentsWithStats || []); // Send empty array if null/undefined
         } catch (tableError) {
             console.error('[Departments Route] Error querying departments table:', tableError);
 
@@ -114,6 +131,154 @@ router.get('/', async (req, res) => {
             console.error('[Departments Route] Direct query also failed:', directQueryError);
             res.status(500).json({ message: 'Failed to retrieve departments' });
         }
+    }
+});
+
+// POST /api/departments - Create a new department (Manager only)
+router.post('/', authMiddleware, requireManager, async (req, res) => {
+    const { name, description } = req.body;
+    const managerId = req.user.id; // Get the ID of the manager creating the department
+
+    console.log(`[Departments Route] Creating new department: ${name}, requested by manager ${managerId}`);
+
+    // Basic validation
+    if (!name) {
+        return res.status(400).json({ message: 'Department name is required.' });
+    }
+
+    try {
+        // Check if department with this name already exists
+        const existingDepartment = await db.Department.findOne({
+            where: { name }
+        });
+
+        if (existingDepartment) {
+            return res.status(400).json({ message: 'A department with this name already exists.' });
+        }
+
+        // Create the department
+        const department = await db.Department.create({
+            name,
+            description: description || null,
+            // Use the timestamp fields that match our schema
+            created_at: new Date(),
+            updated_at: new Date()
+        });
+
+        console.log(`[Departments Route] Department created successfully with ID: ${department.id}`);
+
+        // Return the created department
+        res.status(201).json(department);
+    } catch (error) {
+        console.error('[Departments Route] Error creating department:', error);
+        res.status(500).json({ message: 'Failed to create department.' });
+    }
+});
+
+// GET /api/departments/:id - Get a specific department
+router.get('/:id', authMiddleware, async (req, res) => {
+    const { id } = req.params;
+
+    console.log(`[Departments Route] Fetching department with ID: ${id}`);
+
+    try {
+        const department = await db.Department.findByPk(id);
+
+        if (!department) {
+            return res.status(404).json({ message: 'Department not found.' });
+        }
+
+        res.json(department);
+    } catch (error) {
+        console.error(`[Departments Route] Error fetching department with ID ${id}:`, error);
+        res.status(500).json({ message: 'Failed to retrieve department.' });
+    }
+});
+
+// PUT /api/departments/:id - Update a department (Manager only)
+router.put('/:id', authMiddleware, requireManager, async (req, res) => {
+    const { id } = req.params;
+    const { name, description } = req.body;
+    const managerId = req.user.id;
+
+    console.log(`[Departments Route] Updating department with ID: ${id}, requested by manager ${managerId}`);
+
+    // Basic validation
+    if (!name) {
+        return res.status(400).json({ message: 'Department name is required.' });
+    }
+
+    try {
+        // Check if department exists
+        const department = await db.Department.findByPk(id);
+
+        if (!department) {
+            return res.status(404).json({ message: 'Department not found.' });
+        }
+
+        // Check if another department with the same name exists
+        const existingDepartment = await db.Department.findOne({
+            where: {
+                name,
+                id: { [db.Sequelize.Op.ne]: id } // Not the current department
+            }
+        });
+
+        if (existingDepartment) {
+            return res.status(400).json({ message: 'Another department with this name already exists.' });
+        }
+
+        // Update the department
+        await department.update({
+            name,
+            description: description || null,
+            updated_at: new Date()
+        });
+
+        console.log(`[Departments Route] Department updated successfully: ${department.id}`);
+
+        res.json(department);
+    } catch (error) {
+        console.error(`[Departments Route] Error updating department with ID ${id}:`, error);
+        res.status(500).json({ message: 'Failed to update department.' });
+    }
+});
+
+// DELETE /api/departments/:id - Delete a department (Manager only)
+router.delete('/:id', authMiddleware, requireManager, async (req, res) => {
+    const { id } = req.params;
+    const managerId = req.user.id;
+
+    console.log(`[Departments Route] Deleting department with ID: ${id}, requested by manager ${managerId}`);
+
+    try {
+        // Check if department exists
+        const department = await db.Department.findByPk(id);
+
+        if (!department) {
+            return res.status(404).json({ message: 'Department not found.' });
+        }
+
+        // Check if there are users in this department
+        const usersInDepartment = await db.User.count({
+            where: { department_id: id }
+        });
+
+        if (usersInDepartment > 0) {
+            return res.status(400).json({
+                message: `Cannot delete department with ${usersInDepartment} users. Reassign users first.`
+            });
+        }
+
+        // Delete the department
+        await department.destroy();
+
+        console.log(`[Departments Route] Department deleted successfully: ${id}`);
+
+        res.json({ message: 'Department deleted successfully.' });
+    } catch (error) {
+        console.error(`[Departments Route] Error deleting department with ID ${id}:`, error);
+        res.status(500).json({ message: 'Failed to delete department.' });
     }
 });
 

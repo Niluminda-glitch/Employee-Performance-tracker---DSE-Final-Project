@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, User, BookOpen, HeartPulse, Bell, LogOut, Users, ClipboardList, Menu, ChevronDown, CheckCheck, Send, BarChart, Bed } from "lucide-react";
+import { LayoutDashboard, User, BookOpen, HeartPulse, Bell, LogOut, Users, ClipboardList, Menu, ChevronDown, CheckCheck, Send, BarChart, Bed, FileText } from "lucide-react";
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from "@/components/ui/navigation-menu";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -30,11 +30,8 @@ const TopNavigation = ({
   } = useNotifications();
   const isMobile = useIsMobile();
   const handleLogout = () => {
-    // Logout the user
+    // Logout the user - the logout function now handles redirection
     logout();
-
-    // Redirect to login page
-    navigate("/");
   };
 
   // Define navigation links based on user role
