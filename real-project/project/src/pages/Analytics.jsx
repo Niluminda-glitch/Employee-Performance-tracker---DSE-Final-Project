@@ -23,10 +23,12 @@ import "../styles/animations.css";
 import "../styles/dashboard-float.css";
 import "../styles/analytics-enhancements.css";
 import "../styles/analytics-background.css";
-import { CheckCircle, Clock, ArrowRight, Users, ClipboardList, FileText, Download } from 'lucide-react';
+import "../styles/ai-analytics.css";
+import { CheckCircle, Clock, ArrowRight, Users, ClipboardList, FileText, Download, Brain } from 'lucide-react';
 import AnalyticsBackground from '../components/AnalyticsBackground';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import AIAnalyticsButton from '../components/analytics/AIAnalyticsButton';
 
 const Analytics = () => {
   const { user, api } = useAuth();
@@ -1628,7 +1630,15 @@ const Analytics = () => {
           transition={{ duration: 0.5 }}
           className="mb-8 bg-white p-6 rounded-lg border border-gray-200 shadow-sm sticky top-0 z-10"
         >
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Performance Analytics</h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Performance Analytics</h1>
+            <AIAnalyticsButton
+              userData={user}
+              userSkills={userSkills}
+              taskStats={taskStats}
+              leaveStats={leaveStats}
+            />
+          </div>
         </motion.div>
 
         {(user.role === 'supervisor' || user.role === 'manager') ? (

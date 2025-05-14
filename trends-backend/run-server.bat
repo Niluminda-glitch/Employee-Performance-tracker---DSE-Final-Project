@@ -1,0 +1,3 @@
+@echo off
+echo Starting Trends API backend...
+node simple-server.js

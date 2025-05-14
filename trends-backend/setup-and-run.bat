@@ -1,0 +1,6 @@
+@echo off
+echo Installing dependencies...
+call npm install axios cors dotenv express node-cache
+
+echo Starting the server...
+node server-new.js

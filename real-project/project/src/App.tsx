@@ -26,6 +26,7 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { CursorProvider, useCursor } from "./context/CursorContext";
 import StretchReminder from "./components/StretchReminder";
 import CursorEffect from "./components/CursorEffect";
+import Chatbot from "./components/chatbot/Chatbot";
 import TaskWorkflow from "./pages/TaskWorkflow";
 import DatabaseInitializer from "./components/DatabaseInitializer";
 import PageTransition from "./components/PageTransition";
@@ -152,6 +153,9 @@ const AppContent = () => {
 
       {/* Global StretchReminder component */}
       <StretchReminder />
+
+      {/* Global Chatbot component */}
+      <Chatbot />
     </>
   );
 };

@@ -87,3 +87,64 @@
     transform: translateY(0);
   }
 }
+
+/* Typewriter effect styles */
+.typewriter-effect {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Blinking cursor animation */
+.cursor-blink {
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background-color: #6366f1;
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  from, to {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* AI thinking animation */
+.ai-thinking {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-thinking-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #6366f1;
+}
+
+.ai-thinking-dot:nth-child(1) {
+  animation: thinking 1.4s infinite ease-in-out;
+}
+
+.ai-thinking-dot:nth-child(2) {
+  animation: thinking 1.4s infinite ease-in-out 0.2s;
+}
+
+.ai-thinking-dot:nth-child(3) {
+  animation: thinking 1.4s infinite ease-in-out 0.4s;
+}
+
+@keyframes thinking {
+  0%, 100% {
+    transform: scale(0.6);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

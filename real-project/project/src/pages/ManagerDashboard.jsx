@@ -672,25 +672,33 @@ const ManagerDashboard = () => {
           <div>
             <h1 className="text-3xl font-bold mb-2 text-gradient animate-fade-in">Manager Dashboard</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Button variant="outline" onClick={() => setCreateNotificationOpen(true)}
-              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 -mr-2"
+              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
             >
               <Bell className="h-4 w-4 mr-2" />
               Create Notification
             </Button>
+
+            <div className="relative group inline-block">
+              {/* Animated floating dust effect */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+                <div className="animate-float bg-green-400 opacity-30 w-1 h-1 rounded-full absolute top-1/4 left-1/3 blur-sm" />
+                <div className="animate-float-delay bg-blue-400 opacity-30 w-1.5 h-1.5 rounded-full absolute top-1/2 left-2/3 blur-sm" />
+                <div className="animate-float-slow bg-green-300 opacity-20 w-2 h-2 rounded-full absolute bottom-1/4 right-1/3 blur-md" />
+              </div>
+
+              {/* The button itself */}
+              <Button
+                onClick={() => navigate('/trends')}
+                className="relative z-10 text-white bg-gradient-to-r from-green-600 to-blue-600 hover:from-blue-600 hover:to-green-500 shadow-lg px-6 py-3 rounded-lg transition duration-300 ease-in-out"
+              >
+                <TrendingUp className="h-5 w-5 mr-2" />
+                View Industry Trends
+              </Button>
+            </div>
           </div>
         </div>
-
-        {/* Standalone Trends Button - More visible */}
-        <Button
-          onClick={() => navigate('/trends')}
-          className="bg-teal-600 hover:bg-teal-700 text-white mb-6 shadow-md"
-          size="lg"
-        >
-          <TrendingUp className="h-5 w-5 mr-2" />
-          View Industry Trends
-        </Button>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
