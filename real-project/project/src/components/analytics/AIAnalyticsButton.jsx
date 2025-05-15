@@ -1,11 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Brain, Sparkles } from 'lucide-react';
 import AIAnalyticsModal from './AIAnalyticsModal';
+import { toast } from 'sonner';
 
 const AIAnalyticsButton = ({ userData, userSkills, taskStats, leaveStats }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Log the data being passed to the AI Analytics component
+  useEffect(() => {
+    if (isModalOpen) {
+      console.log("AI Analytics data:", {
+        userData,
+        userSkills,
+        taskStats,
+        leaveStats
+      });
+    }
+  }, [isModalOpen, userData, userSkills, taskStats, leaveStats]);
+
+  const handleOpenModal = () => {
+    // Validate that we have the necessary data
+    if (!userData || !taskStats) {
+      toast.error("Unable to load employee data for AI analysis");
+      return;
+    }
+
+    // Open the modal
+    setIsModalOpen(true);
+    toast.info("Analyzing employee performance data...");
+  };
 
   return (
     <>
@@ -15,7 +40,7 @@ const AIAnalyticsButton = ({ userData, userSkills, taskStats, leaveStats }) => {
         className="relative"
       >
         <Button
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleOpenModal}
           className="ai-analytics-button bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2 relative overflow-hidden group"
           size="lg"
         >
