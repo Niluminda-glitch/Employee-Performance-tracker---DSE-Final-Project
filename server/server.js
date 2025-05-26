@@ -3,6 +3,7 @@ require('dotenv').config(); // Load .env variables FIRST
 const express = require('express');
 const cors = require('cors');
 const passport = require('passport');
+const path = require('path');
 const db = require('./models'); // Imports models/index.js which initializes Sequelize
 const authRoutes = require('./routes/auth'); // Using our new auth.js file
 const userRoutes = require('./routes/user.routes');
@@ -19,6 +20,9 @@ const requestRoutes = require('./routes/requests'); // Import request routes
 const analyticsRoutes = require('./routes/analytics'); // Import analytics routes
 const directUpdateRoutes = require('./routes/direct-update'); // Import direct update routes
 const authMiddleware = require('./middleware/authMiddleware'); // Import the new auth middleware
+
+// Import Swagger configuration
+const { serve, setup } = require('./swagger');
 
 const app = express();
 const PORT = process.env.PORT || 5000; // Use PORT from .env or default
@@ -57,6 +61,19 @@ app.get('/api', (req, res) => res.send('EmpTrack Backend API is running!')); // 
 app.get('/api/test-upcoming', (req, res) => {
   console.log('[Server] Direct test endpoint for upcoming deadlines called');
   res.json({ count: 0, message: 'Direct test endpoint working correctly' });
+});
+
+// Swagger Documentation Routes (Public)
+app.use('/api-docs', serve, setup);
+app.get('/api-docs.json', (req, res) => {
+  const { specs } = require('./swagger');
+  res.setHeader('Content-Type', 'application/json');
+  res.send(specs);
+});
+
+// Response Capture Guide (Public)
+app.get('/api-docs/capture-guide', (req, res) => {
+  res.sendFile(path.join(__dirname, 'docs/response-capture-guide.html'));
 });
 
 // Public Routes (No middleware needed before these)

@@ -230,15 +230,12 @@ const EmployeeDashboard = () => {
             <h1 className="text-3xl font-bold mb-2 text-gradient animate-fade-in">Employee Dashboard</h1>
             <p className="text-gray-500 animate-slide-up">Welcome back! Here's an overview of your tasks and activities.</p>
           </div>
-          <div className="mt-4 md:mt-0">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setCreateNotificationOpen(true)}
-              className="bg-purple-600 hover:bg-purple-700"
+          <div className="flex items-center gap-3 mt-4 md:mt-0">
+            <Button variant="outline" onClick={() => setCreateNotificationOpen(true)}
+              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
             >
-              <Send className="h-4 w-4 mr-2" />
-              Send Notification
+              <Bell className="h-4 w-4 mr-2" />
+              Create Notification
             </Button>
           </div>
         </div>

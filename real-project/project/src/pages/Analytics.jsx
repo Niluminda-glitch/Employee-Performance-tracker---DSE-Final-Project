@@ -28,7 +28,8 @@ import { CheckCircle, Clock, ArrowRight, Users, ClipboardList, FileText, Downloa
 import AnalyticsBackground from '../components/AnalyticsBackground';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import AIAnalyticsButton from '../components/analytics/AIAnalyticsButton';
+import { getAIEmployeeAnalysis } from '../services/aiAnalyticsService';
+import EnhancedAIReportModal from '../components/analytics/EnhancedAIReportModal';
 
 const Analytics = () => {
   const { user, api } = useAuth();
@@ -45,6 +46,12 @@ const Analytics = () => {
   const [generatingReport, setGeneratingReport] = useState(false);
   const teamStatsRef = useRef(null);
   const individualStatsRef = useRef(null);
+
+  // AI Analytics state
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiReport, setAIReport] = useState('');
+  const [isGeneratingAIReport, setIsGeneratingAIReport] = useState(false);
+  const [aiReportError, setAIReportError] = useState('');
 
   useEffect(() => {
     const cleanup = initializeAOS();
@@ -771,6 +778,52 @@ const Analytics = () => {
   };
 
   // Function to generate a detailed performance PDF for the selected individual
+  const handleGenerateAIReport = async () => {
+    if (!selectedUserId) {
+      toast.error("Please select an employee to analyze.");
+      return;
+    }
+
+    const selectedEmployee = teamMembers.find(member => member.id === selectedUserId);
+    if (!selectedEmployee) {
+      toast.error("Selected employee data not found.");
+      return;
+    }
+
+    // Consolidate all necessary data for the selected employee
+    const employeeDataForAI = {
+      id: selectedEmployee.id,
+      name: selectedEmployee.full_name,
+      email: selectedEmployee.email,
+      role: selectedEmployee.role,
+      jobTitle: selectedEmployee.job_title,
+      taskStats: taskStats,
+      leaveStats: leaveStats,
+      userSkills: userSkills
+    };
+
+    // Basic check if essential data is present
+    if (!employeeDataForAI.taskStats) {
+      toast.warn("Task statistics are not yet loaded for this employee. AI analysis might be limited.");
+    }
+
+    setIsGeneratingAIReport(true);
+    setAIReport('');
+    setAIReportError('');
+    setShowAIModal(true);
+
+    try {
+      const report = await getAIEmployeeAnalysis(employeeDataForAI);
+      setAIReport(report);
+    } catch (error) {
+      console.error("Failed to generate AI report:", error);
+      setAIReportError(error.message || "An error occurred while generating the AI report.");
+      toast.error("Failed to generate AI report.");
+    } finally {
+      setIsGeneratingAIReport(false);
+    }
+  };
+
   const handleGeneratePerformancePDF = async () => {
 
     if (!taskStats) {
@@ -1632,12 +1685,13 @@ const Analytics = () => {
         >
           <div className="flex justify-between items-center">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Performance Analytics</h1>
-            <AIAnalyticsButton
-              userData={user}
-              userSkills={userSkills}
-              taskStats={taskStats}
-              leaveStats={leaveStats}
-            />
+            <Button
+              onClick={() => navigate('/ai-analytics')}
+              className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-2"
+            >
+              <Brain className="w-4 h-4" />
+              <span>AI Analytics</span>
+            </Button>
           </div>
         </motion.div>
 
@@ -2477,6 +2531,44 @@ const Analytics = () => {
                     </Card>
                   </motion.div>
 
+                  {/* AI Advanced Analytics Section for Individual */}
+                  {selectedUserId && (
+                    <motion.div
+                      variants={cardItemVariants}
+                      initial="hidden"
+                      animate="visible"
+                      className="mt-8"
+                      data-aos="fade-up"
+                      data-aos-delay="700"
+                    >
+                      <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg rounded-xl overflow-hidden">
+                        <CardHeader className="pb-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                            <Brain className="mr-2 h-5 w-5 text-purple-500" />
+                            Advanced AI Analytics
+                          </CardTitle>
+                          <CardDescription className="text-gray-600 dark:text-gray-400">
+                            Get AI-powered insights and future predictions for {getSelectedUserName().replace("'s", "")}.
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-5 pb-5 text-center">
+                          <Button
+                            onClick={handleGenerateAIReport}
+                            disabled={isGeneratingAIReport || !taskStats}
+                            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium py-2.5 px-6 rounded-lg shadow-md hover:shadow-xl transition-all flex items-center justify-center gap-2 text-sm"
+                          >
+                            {isGeneratingAIReport ? (
+                              <Clock className="animate-spin h-5 w-5" />
+                            ) : (
+                              <Brain className="h-5 w-5" />
+                            )}
+                            {isGeneratingAIReport ? 'Generating Insights...' : `Analyze ${getSelectedUserName().replace("'s", "")} Performance`}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  )}
+
                   {/* Export/Print Buttons for Individual View - Added at the bottom of the page */}
                   <motion.div
                     variants={cardItemVariants}
@@ -2998,6 +3090,15 @@ const Analytics = () => {
         )}
       </main>
 
+      {/* Enhanced AI Report Modal */}
+      <EnhancedAIReportModal
+        isOpen={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        report={aiReport}
+        isLoading={isGeneratingAIReport}
+        error={aiReportError}
+        employeeName={selectedUserId ? teamMembers.find(m => m.id === selectedUserId)?.full_name || 'Selected Employee' : 'Employee'}
+      />
 
     </motion.div>
   );

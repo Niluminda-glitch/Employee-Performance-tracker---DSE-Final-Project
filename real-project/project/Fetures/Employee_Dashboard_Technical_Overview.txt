@@ -1,0 +1,450 @@
+EMPLOYEE DASHBOARD - TECHNICAL FEATURE OVERVIEW
+=====================================================
+
+This document provides detailed technical analysis of Employee Dashboard features,
+focusing on system interactions, database relationships, and architectural patterns
+for creating class diagrams and sequence diagrams.
+
+=====================================================
+1. DASHBOARD OVERVIEW & SUMMARY CARDS
+=====================================================
+
+UNIQUE DIFFERENTIATORS:
+- Real-time aggregated metrics from multiple data sources
+- Dynamic deadline calculation with countdown timers
+- Role-based personalization with contextual information
+- Animated visual feedback for user engagement
+
+SYSTEM INTERACTIONS:
+User → Frontend (React) → AuthContext → API Gateway → Multiple Services
+├── TaskService (GET /tasks/my) → PostgreSQL tasks table
+├── NotificationService (GET /notifications/unread-count) → notifications table
+└── UserService (GET /user/profile) → users table + user_departments table
+
+DATABASE RELATIONSHIPS:
+- users table (1:N) → tasks table (via assignee_id)
+- users table (1:N) → notifications table (via user_id)
+- users table (N:1) → departments table (via department_id)
+- tasks table → users table (supervisor relationship via supervisor_id)
+
+CLASS DIAGRAM HINTS:
+Classes: DashboardController, TaskService, NotificationService, UserService,
+         TaskRepository, NotificationRepository, UserRepository
+Key Methods: getDashboardSummary(), getTaskCounts(), getUnreadCount(), getUserProfile()
+Relationships: Controller aggregates multiple services, Services use repositories
+
+SEQUENCE DIAGRAM HINTS:
+1. User loads dashboard
+2. Frontend calls multiple API endpoints concurrently
+3. Each service queries respective database tables
+4. Results aggregated and returned to frontend
+5. UI updates with animated counters
+
+=====================================================
+2. ACTIVE TASK ASSISTANT
+=====================================================
+
+UNIQUE DIFFERENTIATORS:
+- Real-time task guidance with quality checkpoints
+- Dynamic operation selection with detailed instructions
+- Integration with manufacturing operations database
+- Visual progress tracking with contextual icons
+
+SYSTEM INTERACTIONS:
+User → TaskAssistant Component → API → OperationsService → operations table
+├── GET /operations (fetch available operations)
+├── GET /operations/:id/details (get specific operation details)
+└── Quality checkpoints with icon mapping system
+
+DATABASE RELATIONSHIPS:
+- operations table (contains manufacturing operations)
+- operation_checkpoints table (quality control steps)
+- user_operations table (tracks user's active operations)
+
+CLASS DIAGRAM HINTS:
+Classes: ActiveTaskAssistant, OperationsService, OperationRepository,
+         QualityCheckpoint, TaskGuidance
+Key Methods: startTask(), stopTask(), getOperationDetails(), getQualityCheckpoints()
+Relationships: TaskAssistant uses OperationsService, Operations have multiple Checkpoints
+
+SEQUENCE DIAGRAM HINTS:
+1. User selects operation from dropdown
+2. System fetches operation details and checkpoints
+3. Task guidance displayed with visual indicators
+4. User can start/stop task with state management
+5. Progress tracked and stored in user session
+
+=====================================================
+3. TASK MANAGEMENT SYSTEM
+=====================================================
+
+UNIQUE DIFFERENTIATORS:
+- Multi-level filtering (status, priority, date)
+- Real-time status updates with optimistic UI
+- Supervisor relationship tracking
+- Due date countdown with visual urgency indicators
+
+SYSTEM INTERACTIONS:
+User → TaskManagement Component → API → TaskService → PostgreSQL
+├── GET /tasks/my (fetch user's assigned tasks)
+├── PUT /tasks/:id/status (update task status)
+└── Real-time UI updates with error handling
+
+DATABASE RELATIONSHIPS:
+- tasks table (core entity)
+- users table (assignee and supervisor relationships)
+- task_status ENUM (pending, in-progress, completed)
+- task_priority ENUM (low, medium, high)
+
+CLASS DIAGRAM HINTS:
+Classes: TaskManager, Task, TaskService, TaskRepository, TaskFilter, TaskStatus
+Key Methods: getMyTasks(), updateTaskStatus(), filterTasks(), calculateDueDate()
+Relationships: TaskManager manages multiple Tasks, Tasks belong to Users
+
+SEQUENCE DIAGRAM HINTS:
+1. User loads tasks tab
+2. System fetches tasks with JOIN on users table
+3. Tasks displayed with filtering options
+4. User updates task status
+5. Optimistic UI update + API call
+6. Database updated and confirmation returned
+
+=====================================================
+4. REQUEST MANAGEMENT SYSTEM
+=====================================================
+
+UNIQUE DIFFERENTIATORS:
+- Dual request types (leave/overtime) with different workflows
+- Approval chain with supervisor notification
+- Request history with status tracking
+- Form validation with business rules
+
+SYSTEM INTERACTIONS:
+User → MyRequests Component → API → RequestService → PostgreSQL
+├── GET /requests/my (fetch user's requests)
+├── POST /requests (create new request)
+└── Notification creation for supervisors
+
+DATABASE RELATIONSHIPS:
+- requests table (core entity)
+- users table (requester and approver relationships)
+- notifications table (approval notifications)
+- request_type ENUM (leave, overtime)
+- request_status ENUM (pending, approved, rejected)
+
+CLASS DIAGRAM HINTS:
+Classes: RequestManager, Request, RequestService, RequestRepository,
+         NotificationService, ApprovalWorkflow
+Key Methods: createRequest(), getMyRequests(), approveRequest(), notifySupervisor()
+Relationships: Requests belong to Users, Requests trigger Notifications
+
+SEQUENCE DIAGRAM HINTS:
+1. User creates new request
+2. Form validation and submission
+3. Request stored in database
+4. Notification created for supervisor
+5. Request appears in user's request list
+6. Supervisor receives notification
+
+=====================================================
+5. NOTIFICATION SYSTEM
+=====================================================
+
+UNIQUE DIFFERENTIATORS:
+- Real-time notification updates using context
+- Multiple notification types with different icons
+- Bulk operations (mark all as read)
+- System-wide and personal notifications
+
+SYSTEM INTERACTIONS:
+User → NotificationContext → API → NotificationService → PostgreSQL
+├── GET /notifications (fetch user notifications)
+├── PUT /notifications/:id/read (mark as read)
+├── POST /notifications (create notification)
+└── Real-time count updates
+
+DATABASE RELATIONSHIPS:
+- notifications table (core entity)
+- users table (recipient relationship)
+- notification_type ENUM (task, request, system, announcement)
+- read_status boolean flag
+
+CLASS DIAGRAM HINTS:
+Classes: NotificationManager, Notification, NotificationService,
+         NotificationRepository, NotificationContext
+Key Methods: getNotifications(), markAsRead(), createNotification(), getUnreadCount()
+Relationships: Notifications belong to Users, Context manages state
+
+SEQUENCE DIAGRAM HINTS:
+1. User loads notifications
+2. System fetches with unread count
+3. Real-time updates via context
+4. User marks notifications as read
+5. Database updated and count refreshed
+
+=====================================================
+6. PROFILE MANAGEMENT SYSTEM
+=====================================================
+
+UNIQUE DIFFERENTIATORS:
+- Incremental profile updates (only changed fields)
+- Department relationship management
+- Avatar/profile picture integration
+- Skills matrix integration
+
+SYSTEM INTERACTIONS:
+User → ProfileEditor → API → UserService → PostgreSQL
+├── GET /user/profile (fetch current profile)
+├── PUT /user/profile (update profile)
+└── Department lookup integration
+
+DATABASE RELATIONSHIPS:
+- users table (core entity)
+- departments table (department relationship)
+- user_skills table (skills relationship)
+- Profile fields: full_name, job_title, email, avatar_url, department_id
+
+CLASS DIAGRAM HINTS:
+Classes: ProfileManager, User, UserService, UserRepository,
+         Department, ProfileEditor
+Key Methods: getProfile(), updateProfile(), validateChanges(), getDepartments()
+Relationships: Users belong to Departments, Users have Skills
+
+SEQUENCE DIAGRAM HINTS:
+1. User opens profile editor
+2. Current profile data loaded
+3. User makes changes
+4. Change detection algorithm
+5. Only modified fields sent to API
+6. Database updated and profile refreshed
+
+=====================================================
+ARCHITECTURAL PATTERNS FOR DIAGRAMS
+=====================================================
+
+COMMON PATTERNS ACROSS FEATURES:
+1. Repository Pattern: Service → Repository → Database
+2. Context Pattern: React Context for state management
+3. Observer Pattern: Real-time updates and notifications
+4. Strategy Pattern: Different handling for request types
+5. Factory Pattern: Notification type creation
+
+KEY RELATIONSHIPS FOR CLASS DIAGRAMS:
+- Controller → Service → Repository → Database Entity
+- Context → Component → Service
+- User → Multiple Entities (tasks, requests, notifications)
+- Inheritance: Different request types, notification types
+
+SEQUENCE DIAGRAM COMMON FLOWS:
+1. Authentication check
+2. API call with error handling
+3. Database transaction
+4. UI state update
+5. User feedback (toast/notification)
+
+DATABASE TRANSACTION PATTERNS:
+- Read operations: Simple SELECT with JOINs
+- Write operations: INSERT/UPDATE with validation
+- Complex operations: Multiple table updates in transaction
+- Notification triggers: Automatic notification creation
+
+SECURITY CONSIDERATIONS:
+- JWT token validation on all API calls
+- Role-based access control
+- User ID extraction from token
+- Data filtering by user ownership
+
+=====================================================
+7. SKILLS MANAGEMENT SYSTEM
+=====================================================
+
+UNIQUE DIFFERENTIATORS:
+- Mentorship availability toggle per skill
+- Skill proficiency tracking with certification status
+- Dynamic skill addition from master skill list
+- Integration with mentor finding system
+
+SYSTEM INTERACTIONS:
+User → UserProfileSkills Component → API → SkillService → PostgreSQL
+├── GET /user/skills (fetch user's skills)
+├── POST /user/skills (add new skill)
+├── PUT /user/skills/:id (update skill/mentorship status)
+├── DELETE /user/skills/:id (remove skill)
+└── GET /skills (fetch master skills list)
+
+DATABASE RELATIONSHIPS:
+- user_skills table (junction table)
+- users table (1:N) → user_skills table
+- skills table (1:N) → user_skills table
+- Fields: skill_id, user_id, can_mentor (boolean), proficiency_level
+
+CLASS DIAGRAM HINTS:
+Classes: SkillManager, UserSkill, Skill, SkillService, SkillRepository,
+         MentorshipService
+Key Methods: getUserSkills(), addSkill(), toggleMentorStatus(), removeSkill()
+Relationships: Many-to-Many between Users and Skills via UserSkills
+
+SEQUENCE DIAGRAM HINTS:
+1. User loads skills section
+2. Fetch user skills and master skills list
+3. User adds/removes skills or toggles mentor status
+4. Database updated with skill associations
+5. Mentor availability updated for skill matching
+
+=====================================================
+8. MENTOR FINDING SYSTEM
+=====================================================
+
+UNIQUE DIFFERENTIATORS:
+- Skill-based mentor matching algorithm
+- Mentorship request workflow with notifications
+- Fallback search mechanism for robust data retrieval
+- Integration with user skills and availability
+
+SYSTEM INTERACTIONS:
+User → FindMentor Component → API → MentorService → PostgreSQL
+├── GET /mentors/skill/:skillId (find mentors by skill)
+├── GET /user-skills/by-skill/:skillId (fallback approach)
+├── POST /mentors/request (send mentorship request)
+└── Notification creation for mentor
+
+DATABASE RELATIONSHIPS:
+- user_skills table (mentor availability via can_mentor flag)
+- users table (mentor profile information)
+- mentorship_requests table (request tracking)
+- notifications table (mentor notifications)
+
+CLASS DIAGRAM HINTS:
+Classes: MentorFinder, Mentor, MentorService, MentorshipRequest,
+         SkillMatcher, RequestWorkflow
+Key Methods: findMentorsBySkill(), sendMentorshipRequest(), matchSkills()
+Relationships: Mentors are Users with specific skills, Requests link Users
+
+SEQUENCE DIAGRAM HINTS:
+1. User selects skill for mentorship
+2. System searches for mentors with that skill
+3. Mentors displayed with profiles and availability
+4. User sends mentorship request
+5. Notification created for selected mentor
+6. Request tracked in database
+
+=====================================================
+9. WELLBEING RESOURCES SYSTEM
+=====================================================
+
+UNIQUE DIFFERENTIATORS:
+- Categorized resource management (mental, physical, financial)
+- External resource integration with tracking
+- Employee assistance program integration
+- Resource usage analytics potential
+
+SYSTEM INTERACTIONS:
+User → Wellbeing Component → Static Resources + External Links
+├── Mental health resources (counseling, EAP)
+├── Physical wellness tools and assessments
+├── Financial planning resources
+└── Resource access tracking (potential future feature)
+
+DATABASE RELATIONSHIPS:
+- wellbeing_resources table (resource catalog)
+- resource_categories table (mental, physical, financial)
+- user_resource_access table (usage tracking - future)
+
+CLASS DIAGRAM HINTS:
+Classes: WellbeingManager, Resource, ResourceCategory,
+         ExternalResourceProvider, UsageTracker
+Key Methods: getResourcesByCategory(), trackResourceAccess(), getEAPInfo()
+Relationships: Resources belong to Categories, Users access Resources
+
+SEQUENCE DIAGRAM HINTS:
+1. User navigates to wellbeing section
+2. Resources loaded by category
+3. User clicks external resource links
+4. Access tracked for analytics
+5. External services provide actual content
+
+=====================================================
+10. NOTIFICATION SETTINGS SYSTEM
+=====================================================
+
+UNIQUE DIFFERENTIATORS:
+- Granular notification preferences per category
+- Real-time preference updates
+- Integration with notification delivery system
+- User-specific notification filtering
+
+SYSTEM INTERACTIONS:
+User → NotificationSettings Component → API → SettingsService → PostgreSQL
+├── GET /user/notification-settings (fetch preferences)
+├── PUT /user/notification-settings (update preferences)
+└── Integration with notification delivery logic
+
+DATABASE RELATIONSHIPS:
+- user_notification_settings table
+- notification_types table (email, task, team, deadline, etc.)
+- Settings: user_id, notification_type, enabled (boolean)
+
+CLASS DIAGRAM HINTS:
+Classes: NotificationSettingsManager, NotificationPreference,
+         SettingsService, NotificationFilter
+Key Methods: getSettings(), updateSettings(), filterNotifications()
+Relationships: Users have multiple NotificationPreferences
+
+SEQUENCE DIAGRAM HINTS:
+1. User opens notification settings
+2. Current preferences loaded
+3. User toggles specific notification types
+4. Settings updated in database
+5. Notification delivery system respects preferences
+
+=====================================================
+ADVANCED ARCHITECTURAL CONSIDERATIONS
+=====================================================
+
+MICROSERVICES ARCHITECTURE:
+- UserService: Profile, authentication, user management
+- TaskService: Task assignment, status tracking, workflows
+- NotificationService: Notification delivery, preferences
+- RequestService: Leave/overtime request processing
+- SkillService: Skills management, mentorship matching
+
+API GATEWAY PATTERN:
+- Single entry point for all frontend requests
+- Authentication middleware
+- Rate limiting and request routing
+- Response aggregation for dashboard summary
+
+CACHING STRATEGIES:
+- User profile data (Redis cache)
+- Skill lists and department data
+- Notification counts and recent notifications
+- Dashboard summary data with TTL
+
+REAL-TIME FEATURES:
+- WebSocket connections for live notifications
+- Server-sent events for dashboard updates
+- Optimistic UI updates with rollback capability
+
+ERROR HANDLING PATTERNS:
+- Graceful degradation for failed services
+- Retry mechanisms with exponential backoff
+- User-friendly error messages
+- Fallback data sources
+
+PERFORMANCE OPTIMIZATIONS:
+- Lazy loading for non-critical components
+- Pagination for large data sets
+- Database query optimization with proper indexing
+- Frontend state management with React Context
+
+TESTING STRATEGIES:
+- Unit tests for individual components and services
+- Integration tests for API endpoints
+- End-to-end tests for complete user workflows
+- Performance testing for concurrent users
+
+DEPLOYMENT CONSIDERATIONS:
+- Containerized services with Docker
+- Database migrations and versioning
+- Environment-specific configurations
+- Monitoring and logging integration

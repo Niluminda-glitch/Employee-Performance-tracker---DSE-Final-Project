@@ -1,0 +1,1111 @@
+EMPTRACK - EMPLOYEE TRACKING & MANAGEMENT SYSTEM
+COMPREHENSIVE PROJECT PROPOSAL GUIDE
+=================================================
+
+This document provides detailed explanations for creating a professional project proposal
+for the EmpTrack application. Each section includes specific content, real examples,
+and detailed descriptions for someone unfamiliar with the application.
+
+=================================================
+PART 1: PROJECT OVERVIEW & EXECUTIVE SUMMARY
+=================================================
+
+SECTION 1.1: PROJECT INTRODUCTION
+----------------------------------
+
+WHAT TO WRITE:
+Start with a compelling opening that immediately establishes the project's value.
+
+DETAILED CONTENT EXAMPLE:
+
+"EmpTrack represents a revolutionary approach to employee management, combining traditional
+workforce tracking with cutting-edge artificial intelligence to create a comprehensive
+platform that transforms how organizations manage their human resources.
+
+PROJECT TITLE: EmpTrack - AI-Powered Employee Tracking & Management System
+
+PROBLEM STATEMENT (Explain the current pain points):
+Traditional employee management systems suffer from several critical limitations:
+- Manual task assignment and tracking leading to 40% productivity loss
+- Lack of real-time visibility into employee performance and workload
+- Fragmented communication between management levels (employees, supervisors, managers)
+- No predictive insights for workforce planning and performance optimization
+- Time-consuming administrative processes for leave requests and approvals
+- Limited employee development and mentorship opportunities
+- Absence of integrated wellbeing and support resources
+
+SOLUTION OVERVIEW (Describe what EmpTrack does):
+EmpTrack is a modern, web-based platform that addresses these challenges through:
+
+1. ROLE-BASED DASHBOARD SYSTEM:
+   - Employee Dashboard: Personal workspace for task management, requests, and development
+   - Supervisor Dashboard: Team management tools with performance monitoring
+   - Manager Dashboard: Organization-wide analytics and strategic decision-making tools
+
+2. AI-POWERED ANALYTICS ENGINE:
+   - Real-time performance analysis using OpenRouter AI with DeepSeek-V3 model
+   - Predictive insights for workforce planning and employee development
+   - Automated report generation with natural language summaries
+   - Trend analysis for productivity optimization
+
+3. INTEGRATED WORKFLOW MANAGEMENT:
+   - Seamless task assignment from managers to supervisors to employees
+   - Automated approval workflows for leave and overtime requests
+   - Real-time notification system for instant communication
+   - Quality checkpoint system for manufacturing processes
+
+4. EMPLOYEE DEVELOPMENT ECOSYSTEM:
+   - Skills matrix management with proficiency tracking
+   - Mentorship matching system based on skills and availability
+   - Comprehensive wellbeing resources and support tools
+   - Professional development tracking and recommendations
+
+TECHNOLOGY FOUNDATION:
+- Frontend: React.js with modern UI/UX design and responsive layouts
+- Backend: Node.js with Express.js for robust API development
+- Database: PostgreSQL with Supabase for scalable data management
+- Authentication: Google OAuth 2.0 for secure, seamless login
+- AI Integration: OpenRouter API with DeepSeek-V3-0324 model for advanced analytics
+- Architecture: Microservices design for scalability and maintainability
+
+TARGET INDUSTRIES:
+Primary: Garment Manufacturing (with specialized quality control features)
+Secondary: General Enterprise (adaptable to any industry with employee management needs)"
+
+SECTION 1.2: BUSINESS OBJECTIVES
+--------------------------------
+
+WHAT TO WRITE:
+Clearly define measurable goals and expected outcomes that demonstrate business value.
+
+DETAILED CONTENT EXAMPLE:
+
+"PRIMARY BUSINESS OBJECTIVES (Quantifiable Goals):
+
+1. OPERATIONAL EFFICIENCY IMPROVEMENTS:
+   - Reduce task assignment time from 15 minutes to 2 minutes (87% improvement)
+   - Increase task completion rates from 65% to 90% through real-time tracking
+   - Decrease administrative overhead by 40% through automated workflows
+   - Improve employee onboarding speed by 50% using QR code system
+
+2. DATA-DRIVEN DECISION MAKING:
+   - Implement AI-powered analytics providing 95% accurate performance predictions
+   - Generate automated reports reducing manual reporting time by 70%
+   - Enable real-time visibility into workforce productivity and bottlenecks
+   - Provide predictive insights for workforce planning and resource allocation
+
+3. COMPLIANCE AND AUDIT READINESS:
+   - Maintain 100% audit trail for all employee actions and approvals
+   - Ensure GDPR/CCPA compliance with comprehensive data protection
+   - Implement role-based access control preventing unauthorized data access
+   - Track all leave and overtime requests with complete approval history
+
+4. EMPLOYEE SATISFACTION AND DEVELOPMENT:
+   - Increase employee engagement scores by 30% through development tools
+   - Reduce time-to-find-mentor from weeks to minutes using skill-based matching
+   - Provide 24/7 access to wellbeing resources and support systems
+   - Enable transparent performance tracking and career development planning
+
+SECONDARY OBJECTIVES (Strategic Benefits):
+
+1. ORGANIZATIONAL CULTURE ENHANCEMENT:
+   - Foster mentorship culture through integrated matching system
+   - Improve work-life balance with streamlined request processes
+   - Enhance communication transparency across all organizational levels
+   - Build data-driven performance evaluation culture
+
+2. SCALABILITY AND FUTURE-PROOFING:
+   - Design system to handle 10x current user load without performance degradation
+   - Implement microservices architecture for easy feature additions
+   - Prepare foundation for mobile app development and IoT integration
+   - Enable integration with existing HR systems and third-party tools"
+
+SECTION 1.3: TARGET AUDIENCE & USER PERSONAS
+--------------------------------------------
+
+WHAT TO WRITE:
+Define specific user types with their needs, pain points, and how EmpTrack solves their problems.
+
+DETAILED CONTENT EXAMPLE:
+
+"PRIMARY USER PERSONAS:
+
+1. EMPLOYEE PERSONA - 'Sarah the Production Worker'
+   Background: 28-year-old garment factory worker, 3 years experience
+   Current Pain Points:
+   - Unclear task priorities and deadlines
+   - Difficulty requesting leave or overtime
+   - No visibility into performance metrics
+   - Limited access to skill development opportunities
+
+   How EmpTrack Helps:
+   - Personal dashboard with clear task priorities and deadlines
+   - One-click leave/overtime requests with real-time status tracking
+   - Performance insights and development recommendations
+   - Access to mentorship network and wellbeing resources
+
+   Key Features Used:
+   - Task management with Active Task Assistant
+   - Request submission and tracking
+   - Skills matrix and mentor finding
+   - Notification center for updates
+
+2. SUPERVISOR PERSONA - 'Mike the Team Lead'
+   Background: 35-year-old supervisor managing 15 production workers
+   Current Pain Points:
+   - Time-consuming manual task assignment
+   - Difficulty tracking team performance
+   - Overwhelming approval requests
+   - No insights into team productivity trends
+
+   How EmpTrack Helps:
+   - Streamlined task assignment with drag-and-drop interface
+   - Real-time team performance dashboard with AI insights
+   - Automated approval workflows with notification system
+   - Predictive analytics for team optimization
+
+   Key Features Used:
+   - Team management dashboard
+   - Task assignment and tracking tools
+   - Request approval system
+   - Performance analytics and reporting
+
+3. MANAGER PERSONA - 'Lisa the Operations Manager'
+   Background: 42-year-old manager overseeing 5 supervisors and 75 employees
+   Current Pain Points:
+   - Lack of organization-wide visibility
+   - Manual user management and onboarding
+   - Time-intensive report generation
+   - No predictive workforce planning tools
+
+   How EmpTrack Helps:
+   - Comprehensive organization dashboard with AI-powered insights
+   - QR code-based user onboarding and management system
+   - Automated report generation with natural language summaries
+   - Predictive analytics for strategic workforce planning
+
+   Key Features Used:
+   - Organization-wide analytics dashboard
+   - User and department management
+   - AI-powered reporting and insights
+   - Strategic planning tools
+
+SECONDARY STAKEHOLDERS:
+
+1. HR DEPARTMENTS:
+   - Need: Compliance reporting, employee development tracking
+   - Benefits: Automated audit trails, skills tracking, performance data
+
+2. IT ADMINISTRATORS:
+   - Need: System security, user management, integration capabilities
+   - Benefits: Role-based access control, secure authentication, API integration
+
+3. EXECUTIVE LEADERSHIP:
+   - Need: Strategic insights, ROI measurement, organizational metrics
+   - Benefits: Executive dashboards, predictive analytics, performance trends"
+
+SCREENSHOTS NEEDED FOR PART 1:
+• Login screen showing Google OAuth integration
+• Employee dashboard overview with all tabs visible
+• Supervisor dashboard showing team management
+• Manager dashboard with AI analytics
+• Mobile responsive view of the application
+• System architecture overview diagram
+
+=================================================
+SYSTEM ARCHITECTURE OVERVIEW DIAGRAM GUIDE
+=================================================
+
+DIAGRAM PURPOSE:
+Create a high-level visual representation of EmpTrack's system architecture
+showing all major components, data flow, and external integrations.
+
+DIAGRAM LAYOUT STRUCTURE:
+Use a layered approach from top to bottom:
+1. User Interface Layer (Top)
+2. API Gateway Layer
+3. Microservices Layer
+4. Data Layer (Bottom)
+5. External Services (Side panels)
+
+DETAILED COMPONENT DESCRIPTIONS:
+
+LAYER 1: USER INTERFACE LAYER (Top Section)
+-------------------------------------------
+Position: Top of diagram, spanning full width
+Background Color: Light blue (#E3F2FD)
+
+Components to Draw:
+1. WEB BROWSER (Left side)
+   - Icon: Browser window icon
+   - Label: "Web Browser (Chrome, Firefox, Safari)"
+   - Sub-components: React.js Frontend, Context API State Management
+   - Connection: Bidirectional arrow to API Gateway
+
+2. MOBILE DEVICES (Right side)
+   - Icon: Smartphone and tablet icons
+   - Label: "Mobile Devices (iOS/Android)"
+   - Sub-components: Future Mobile Apps, PWA Support
+   - Connection: Bidirectional arrow to API Gateway
+
+3. USER ROLES (Center)
+   - Three user icons with labels:
+     * Employee (Green icon)
+     * Supervisor (Blue icon)
+     * Manager (Purple icon)
+   - Connection: Lines connecting to respective dashboards
+
+LAYER 2: API GATEWAY LAYER (Second from top)
+--------------------------------------------
+Position: Below User Interface Layer
+Background Color: Light green (#E8F5E8)
+
+Components to Draw:
+1. API GATEWAY (Center, large rectangle)
+   - Icon: Gateway/router icon
+   - Label: "API Gateway (Express.js)"
+   - Sub-components:
+     * Authentication Middleware
+     * Rate Limiting
+     * Request Routing
+     * Response Aggregation
+   - Connections:
+     * Up arrows to User Interface Layer
+     * Down arrows to all Microservices
+     * Side arrow to External Authentication
+
+LAYER 3: MICROSERVICES LAYER (Middle section)
+---------------------------------------------
+Position: Center of diagram
+Background Color: Light yellow (#FFF9C4)
+
+Draw 5 microservice boxes in a row:
+
+1. USER SERVICE (Leftmost)
+   - Icon: User management icon
+   - Label: "User Service"
+   - Sub-components:
+     * Profile Management
+     * Role Assignment
+     * User Authentication
+     * QR Code Generation
+   - Database Connection: Arrow down to Users Table
+
+2. TASK SERVICE (Second from left)
+   - Icon: Task/checklist icon
+   - Label: "Task Service"
+   - Sub-components:
+     * Task Assignment
+     * Status Tracking
+     * Workflow Management
+     * Quality Checkpoints
+   - Database Connection: Arrow down to Tasks Table
+
+3. NOTIFICATION SERVICE (Center)
+   - Icon: Bell/notification icon
+   - Label: "Notification Service"
+   - Sub-components:
+     * Real-time Notifications
+     * Email Integration
+     * Preference Management
+     * Bulk Notifications
+   - Database Connection: Arrow down to Notifications Table
+
+4. ANALYTICS SERVICE (Second from right)
+   - Icon: Chart/analytics icon
+   - Label: "Analytics Service"
+   - Sub-components:
+     * AI Integration
+     * Report Generation
+     * Performance Metrics
+     * Predictive Analytics
+   - Connections:
+     * Arrow down to Analytics Database
+     * Side arrow to AI Services
+
+5. REQUEST SERVICE (Rightmost)
+   - Icon: Document/form icon
+   - Label: "Request Service"
+   - Sub-components:
+     * Leave Requests
+     * Overtime Requests
+     * Approval Workflows
+     * Audit Trails
+   - Database Connection: Arrow down to Requests Table
+
+LAYER 4: DATA LAYER (Bottom section)
+------------------------------------
+Position: Bottom of diagram
+Background Color: Light gray (#F5F5F5)
+
+Components to Draw:
+
+1. PRIMARY DATABASE (Left side, large rectangle)
+   - Icon: Database cylinder icon
+   - Label: "PostgreSQL Database (Supabase)"
+   - Sub-components (smaller rectangles inside):
+     * Users Table
+     * Tasks Table
+     * Notifications Table
+     * Requests Table
+     * Departments Table
+     * Skills Table
+     * User_Skills Table
+     * Operations Table
+   - Features:
+     * Real-time Subscriptions
+     * Row Level Security
+     * Automatic API Generation
+
+2. CACHING LAYER (Center)
+   - Icon: Cache/memory icon
+   - Label: "Redis Cache"
+   - Sub-components:
+     * Session Storage
+     * API Response Cache
+     * Real-time Data Cache
+   - Connection: Bidirectional arrows to all microservices
+
+3. FILE STORAGE (Right side)
+   - Icon: Cloud storage icon
+   - Label: "File Storage"
+   - Sub-components:
+     * Profile Pictures
+     * Generated Reports
+     * QR Codes
+     * Backup Files
+
+EXTERNAL SERVICES (Side panels)
+-------------------------------
+Position: Left and right sides of diagram
+Background Color: Light orange (#FFF3E0)
+
+LEFT SIDE PANEL - AUTHENTICATION:
+1. GOOGLE OAUTH (Top left)
+   - Icon: Google logo
+   - Label: "Google OAuth 2.0"
+   - Sub-components:
+     * User Authentication
+     * Profile Information
+     * Security Infrastructure
+   - Connection: Arrow to API Gateway
+
+2. SUPABASE AUTH (Below Google OAuth)
+   - Icon: Supabase logo
+   - Label: "Supabase Authentication"
+   - Sub-components:
+     * JWT Token Management
+     * User Session Handling
+     * Role-based Access Control
+   - Connection: Arrow to User Service
+
+RIGHT SIDE PANEL - AI & EXTERNAL SERVICES:
+1. OPENROUTER AI (Top right)
+   - Icon: AI/brain icon
+   - Label: "OpenRouter AI API"
+   - Sub-components:
+     * DeepSeek-V3 Model
+     * Performance Analysis
+     * Report Generation
+     * Predictive Insights
+   - Connection: Arrow to Analytics Service
+
+2. EMAIL SERVICE (Below AI)
+   - Icon: Email icon
+   - Label: "Email Service (SMTP)"
+   - Sub-components:
+     * Notification Emails
+     * Report Delivery
+     * System Alerts
+   - Connection: Arrow to Notification Service
+
+3. MONITORING & LOGGING (Bottom right)
+   - Icon: Monitor/graph icon
+   - Label: "Monitoring Services"
+   - Sub-components:
+     * Application Performance Monitoring
+     * Error Tracking
+     * Security Monitoring
+     * Usage Analytics
+   - Connection: Dotted lines to all services
+
+DATA FLOW ARROWS:
+----------------
+Use different arrow styles to show different types of connections:
+
+1. SOLID ARROWS (Black): Primary data flow
+   - User requests to API Gateway
+   - API Gateway to Microservices
+   - Microservices to Database
+
+2. DASHED ARROWS (Blue): Authentication flow
+   - Google OAuth to API Gateway
+   - API Gateway to Supabase Auth
+   - Auth verification back to services
+
+3. DOTTED ARROWS (Green): Real-time updates
+   - Database to Notification Service
+   - Notification Service to Users
+   - Cache updates between services
+
+4. THICK ARROWS (Red): High-volume data
+   - Analytics Service to AI API
+   - Database queries from services
+   - File uploads to storage
+
+SECURITY INDICATORS:
+-------------------
+Add security symbols to show protection layers:
+
+1. SHIELD ICONS: At API Gateway and Database
+2. LOCK ICONS: On authentication connections
+3. ENCRYPTION SYMBOLS: On data transmission arrows
+4. FIREWALL ICON: Around the entire system
+
+PERFORMANCE INDICATORS:
+----------------------
+Add performance symbols:
+
+1. LIGHTNING BOLTS: For cached data paths
+2. SPEEDOMETER ICONS: For optimized connections
+3. LOAD BALANCER ICON: At API Gateway
+4. SCALING ARROWS: Showing horizontal scaling capability
+
+DIAGRAM ANNOTATIONS:
+-------------------
+Add text boxes with key information:
+
+1. TECHNOLOGY STACK (Top right corner):
+   - Frontend: React.js, Context API
+   - Backend: Node.js, Express.js
+   - Database: PostgreSQL, Supabase
+   - Cache: Redis
+   - AI: OpenRouter, DeepSeek-V3
+
+2. SCALABILITY FEATURES (Bottom left corner):
+   - Microservices Architecture
+   - Horizontal Scaling
+   - Load Balancing
+   - Auto-scaling Infrastructure
+
+3. SECURITY FEATURES (Bottom right corner):
+   - OAuth 2.0 Authentication
+   - JWT Token Management
+   - Role-based Access Control
+   - Data Encryption
+
+COLOR CODING LEGEND:
+-------------------
+Include a legend box showing:
+- Blue: User Interface Components
+- Green: API Gateway Layer
+- Yellow: Microservices
+- Gray: Data Storage
+- Orange: External Services
+- Red: Security Components
+
+DIAGRAM DIMENSIONS:
+------------------
+Recommended size: 1920x1080 pixels (16:9 aspect ratio)
+- Allows for detailed component labels
+- Suitable for presentation slides
+- High resolution for printing
+
+TOOLS FOR CREATION:
+------------------
+Recommended diagramming tools:
+1. Lucidchart (Professional diagrams)
+2. Draw.io/Diagrams.net (Free, web-based)
+3. Microsoft Visio (Enterprise standard)
+4. Figma (Modern, collaborative)
+5. Miro (Collaborative whiteboard)
+
+FINAL PRESENTATION TIPS:
+-----------------------
+1. Use consistent icon styles throughout
+2. Maintain proper spacing between components
+3. Ensure all text is readable at presentation size
+4. Use professional color scheme
+5. Include company branding if required
+6. Add version number and creation date
+7. Export in multiple formats (PNG, SVG, PDF)
+
+=================================================
+PART 2: TECHNICAL ARCHITECTURE & SYSTEM DESIGN
+=================================================
+
+SECTION 2.1: SYSTEM ARCHITECTURE
+--------------------------------
+
+WHAT TO WRITE:
+Explain the technical foundation in business terms, then dive into technical details.
+
+DETAILED CONTENT EXAMPLE:
+
+"ARCHITECTURAL OVERVIEW:
+EmpTrack is built using a modern microservices architecture that ensures scalability,
+reliability, and maintainability. Think of it as a collection of specialized services
+that work together seamlessly, rather than one large monolithic application.
+
+FRONTEND ARCHITECTURE (What Users See and Interact With):
+
+1. REACT.JS FRAMEWORK:
+   - Modern JavaScript library for building interactive user interfaces
+   - Component-based architecture allowing for reusable UI elements
+   - Virtual DOM for optimal performance and smooth user experience
+   - Responsive design ensuring compatibility across desktop, tablet, and mobile devices
+
+2. STATE MANAGEMENT WITH CONTEXT API:
+   - Centralized data management for consistent user experience
+   - Real-time updates across all dashboard components
+   - Efficient data sharing between different parts of the application
+   - Optimized performance with minimal re-rendering
+
+3. USER INTERFACE FEATURES:
+   - Purple gradient theme with modern, professional design
+   - Animated transitions and hover effects for enhanced user experience
+   - Accessibility compliance (WCAG 2.1) for inclusive design
+   - Dark/light mode support for user preference
+
+BACKEND ARCHITECTURE (The Engine Behind the Scenes):
+
+1. NODE.JS WITH EXPRESS.JS:
+   - High-performance JavaScript runtime for server-side development
+   - Express.js framework providing robust API development capabilities
+   - Asynchronous processing for handling multiple user requests simultaneously
+   - RESTful API design following industry best practices
+
+2. MICROSERVICES ARCHITECTURE:
+   Instead of one large application, EmpTrack consists of specialized services:
+
+   a) USER SERVICE:
+      - Handles user authentication, profile management, and role assignment
+      - Manages Google OAuth integration and JWT token generation
+      - Processes user onboarding with QR code generation
+      - Maintains user preferences and settings
+
+   b) TASK SERVICE:
+      - Manages task creation, assignment, and tracking
+      - Handles workflow automation and status updates
+      - Processes quality checkpoints for manufacturing operations
+      - Generates task-related notifications and reminders
+
+   c) NOTIFICATION SERVICE:
+      - Delivers real-time notifications across the platform
+      - Manages user notification preferences and settings
+      - Handles email notifications and in-app alerts
+      - Processes bulk notifications for system-wide announcements
+
+   d) ANALYTICS SERVICE:
+      - Integrates with OpenRouter AI for performance analysis
+      - Generates automated reports and insights
+      - Processes data aggregation for dashboard metrics
+      - Handles predictive analytics and trend analysis
+
+   e) REQUEST SERVICE:
+      - Manages leave and overtime request workflows
+      - Handles approval routing based on organizational hierarchy
+      - Maintains audit trails for compliance
+      - Processes calendar integration for scheduling
+
+3. API GATEWAY PATTERN:
+   - Single entry point for all frontend requests
+   - Handles authentication and authorization for all services
+   - Implements rate limiting to prevent system abuse
+   - Routes requests to appropriate microservices
+   - Aggregates responses for dashboard summary data
+
+DATABASE ARCHITECTURE (Data Storage and Management):
+
+1. POSTGRESQL WITH SUPABASE:
+   - Enterprise-grade relational database for data integrity
+   - Supabase provides real-time subscriptions and instant APIs
+   - Built-in authentication and authorization features
+   - Automatic API generation from database schema
+   - Real-time data synchronization across all connected clients
+
+2. DATA ORGANIZATION:
+   - Normalized database design preventing data redundancy
+   - Optimized indexing for fast query performance
+   - Foreign key relationships ensuring data consistency
+   - Audit logging for compliance and troubleshooting
+
+AUTHENTICATION & SECURITY ARCHITECTURE:
+
+1. GOOGLE OAUTH 2.0 INTEGRATION:
+   - Secure, industry-standard authentication protocol
+   - Eliminates need for users to remember additional passwords
+   - Leverages Google's security infrastructure
+   - Provides seamless single sign-on experience
+
+2. JWT TOKEN SYSTEM:
+   - Stateless authentication tokens for scalability
+   - Role-based access control embedded in tokens
+   - Automatic token refresh for uninterrupted user experience
+   - Secure token storage and transmission
+
+AI INTEGRATION ARCHITECTURE:
+
+1. OPENROUTER API WITH DEEPSEEK-V3 MODEL:
+   - Advanced AI model specifically chosen for business analytics
+   - OpenRouter provides reliable API access with fallback options
+   - Structured prompt engineering for consistent, actionable insights
+   - Real-time processing for immediate feedback
+
+2. AI PROCESSING PIPELINE:
+   - Data collection from multiple sources (tasks, performance, skills)
+   - Data preprocessing and normalization
+   - AI model inference with structured prompts
+   - Response parsing and formatting for user consumption
+   - Fallback mechanisms for API failures"
+
+SECTION 2.2: DATABASE DESIGN
+----------------------------
+
+WHAT TO WRITE:
+Explain the database structure in terms of business entities and their relationships.
+
+DETAILED CONTENT EXAMPLE:
+
+"DATABASE FOUNDATION:
+EmpTrack uses a relational database design that mirrors real-world business relationships
+and ensures data integrity, consistency, and optimal performance.
+
+CORE BUSINESS ENTITIES (Database Tables):
+
+1. USERS TABLE (The Heart of the System):
+   Purpose: Stores all employee, supervisor, and manager information
+   Key Fields:
+   - id: Unique identifier for each user (UUID format for security)
+   - email: User's email address (unique, used for login)
+   - full_name: Complete name for display purposes
+   - role: User's role (employee, supervisor, manager) determining access levels
+   - status: Account status (active, inactive, first_login) for access control
+   - department_id: Links user to their department
+   - supervisor_id: Creates hierarchical reporting structure
+   - job_title: User's position within the organization
+   - avatar_url: Profile picture for personalization
+   - created_at/updated_at: Audit timestamps
+
+2. DEPARTMENTS TABLE (Organizational Structure):
+   Purpose: Defines organizational units and their management structure
+   Key Fields:
+   - id: Unique department identifier
+   - name: Department name (e.g., "Production", "Quality Control")
+   - description: Detailed department information
+   - headcount: Number of employees (calculated field)
+   - manager_id: Department manager (links to users table)
+   - created_at/updated_at: Audit timestamps
+
+3. TASKS TABLE (Work Management):
+   Purpose: Tracks all work assignments and their progress
+   Key Fields:
+   - id: Unique task identifier
+   - title: Task name/description
+   - description: Detailed task instructions
+   - assignee_id: Employee assigned to the task (links to users)
+   - supervisor_id: Task creator/supervisor (links to users)
+   - status: Current state (pending, in-progress, completed)
+   - priority: Urgency level (low, medium, high)
+   - due_date: Deadline for completion
+   - completed_at: Actual completion timestamp
+   - created_at/updated_at: Audit timestamps
+
+4. NOTIFICATIONS TABLE (Communication Hub):
+   Purpose: Manages all system notifications and alerts
+   Key Fields:
+   - id: Unique notification identifier
+   - user_id: Recipient (links to users table)
+   - title: Notification headline
+   - message: Detailed notification content
+   - type: Category (task, request, system, announcement)
+   - is_read: Read status for tracking
+   - is_important: Priority flag for urgent notifications
+   - created_at: Timestamp for chronological ordering
+
+5. REQUESTS TABLE (Approval Workflows):
+   Purpose: Handles leave, overtime, and other approval requests
+   Key Fields:
+   - id: Unique request identifier
+   - user_id: Employee making the request (links to users)
+   - type: Request category (leave, overtime, mentorship)
+   - status: Current state (pending, approved, rejected)
+   - start_date: Request start date (for leave/overtime)
+   - end_date: Request end date (for leave/overtime)
+   - hours: Number of hours (for overtime requests)
+   - reason: Employee's explanation for the request
+   - approver_id: Manager/supervisor who approved/rejected
+   - approved_at: Approval timestamp
+   - created_at/updated_at: Audit timestamps
+
+6. USER_SKILLS TABLE (Skills Management):
+   Purpose: Junction table linking users to their skills and mentorship availability
+   Key Fields:
+   - user_id: Employee (links to users table)
+   - skill_id: Skill reference (links to skills table)
+   - can_mentor: Boolean indicating mentorship availability
+   - proficiency_level: Skill level (beginner, intermediate, advanced, expert)
+   - certified: Whether the user is certified in this skill
+   - last_updated: When skill information was last modified
+
+7. SKILLS TABLE (Master Skills List):
+   Purpose: Maintains the organization's skill catalog
+   Key Fields:
+   - id: Unique skill identifier
+   - name: Skill name (e.g., "Pocket Setting", "Quality Control")
+   - description: Detailed skill information
+   - category: Skill grouping (technical, soft skills, leadership)
+   - created_at: When skill was added to the system
+
+8. OPERATIONS TABLE (Manufacturing Processes):
+   Purpose: Defines manufacturing operations and quality checkpoints
+   Key Fields:
+   - id: Unique operation identifier
+   - name: Operation name (e.g., "Collar Attachment")
+   - description: Detailed operation instructions
+   - quality_checkpoints: JSON array of quality control steps
+   - estimated_time: Expected completion time
+   - skill_requirements: Required skills for the operation
+
+RELATIONSHIP MAPPING (How Data Connects):
+
+1. HIERARCHICAL RELATIONSHIPS:
+   - Users → Users (supervisor_id): Creates reporting structure
+   - Departments → Users (department_id): Organizational grouping
+   - Users → Tasks (assignee_id, supervisor_id): Work assignment chain
+
+2. ONE-TO-MANY RELATIONSHIPS:
+   - One User can have Many Tasks (as assignee)
+   - One User can create Many Tasks (as supervisor)
+   - One User can receive Many Notifications
+   - One User can submit Many Requests
+   - One Department can have Many Users
+
+3. MANY-TO-MANY RELATIONSHIPS:
+   - Users ↔ Skills (via user_skills table): Employees can have multiple skills,
+     skills can belong to multiple employees
+
+4. AUDIT AND COMPLIANCE RELATIONSHIPS:
+   - All tables include created_at/updated_at for change tracking
+   - Requests table maintains complete approval history
+   - Notifications table provides communication audit trail
+
+DATA INTEGRITY MEASURES:
+
+1. FOREIGN KEY CONSTRAINTS:
+   - Prevent orphaned records (e.g., tasks without valid assignees)
+   - Maintain referential integrity across all relationships
+   - Cascade deletes where appropriate (e.g., user deletion removes their tasks)
+
+2. CHECK CONSTRAINTS:
+   - Role field limited to valid values (employee, supervisor, manager)
+   - Status fields constrained to defined states
+   - Date fields validated for logical consistency
+
+3. UNIQUE CONSTRAINTS:
+   - Email addresses must be unique across all users
+   - Department names must be unique within the organization
+
+4. INDEXING STRATEGY:
+   - Primary keys automatically indexed for fast lookups
+   - Foreign keys indexed for efficient joins
+   - Frequently queried fields (email, status, due_date) indexed
+   - Composite indexes for complex queries (user_id + status)"
+
+SECTION 2.3: SECURITY FRAMEWORK
+-------------------------------
+Authentication:
+• Google OAuth 2.0 integration with Supabase
+• JWT token-based session management
+• Role-based access control (RBAC)
+• Session timeout and refresh mechanisms
+
+Authorization:
+• Hierarchical permission system (employee < supervisor < manager)
+• Resource-level access control
+• API endpoint protection with middleware
+• Data filtering based on user roles and relationships
+
+Data Security:
+• Encrypted data transmission (HTTPS/TLS)
+• Password hashing with bcrypt
+• SQL injection prevention with parameterized queries
+• Input validation and sanitization
+
+SCREENSHOTS NEEDED FOR PART 2:
+• Database schema diagram
+• System architecture diagram
+• API endpoint documentation
+• Security flow diagrams
+• Authentication screens
+
+=================================================
+PART 3: FEATURE SPECIFICATIONS & FUNCTIONALITY
+=================================================
+
+SECTION 3.1: ROLE-BASED DASHBOARD SYSTEM
+----------------------------------------
+Employee Dashboard Features:
+• Personal task management with real-time status updates
+• Active Task Assistant with quality checkpoints
+• Request management (leave, overtime) with approval tracking
+• Notification center with categorized alerts
+• Profile management with skills matrix
+• Mentorship finding and request system
+• Wellbeing resources and support tools
+
+Supervisor Dashboard Features:
+• Team member management and monitoring
+• Task assignment with priority and deadline setting
+• Team performance analytics and reporting
+• Request approval workflow (leave, overtime)
+• Individual employee performance tracking
+• Team communication and notification broadcasting
+• Resource allocation and workload balancing
+
+Manager Dashboard Features:
+• Organization-wide user management with role assignment
+• Department creation and management
+• Comprehensive analytics with AI-powered insights
+• System-wide request approval and oversight
+• Advanced reporting with PDF export capabilities
+• Strategic performance metrics and trends analysis
+• QR code-based user onboarding system
+
+SECTION 3.2: AI-POWERED ANALYTICS
+---------------------------------
+AI Features:
+• Employee performance analysis with predictive insights
+• Automated report generation with natural language summaries
+• Trend analysis for productivity and engagement metrics
+• Personalized recommendations for skill development
+• Workload optimization suggestions
+• Risk assessment for employee retention
+
+AI Integration:
+• OpenRouter API with DeepSeek-V3-0324 model
+• Structured prompt engineering for consistent outputs
+• Real-time data processing and insight generation
+• Markdown-formatted responses with visualizations
+• Context-aware analysis based on historical data
+
+SECTION 3.3: WORKFLOW MANAGEMENT
+-------------------------------
+Task Management:
+• Hierarchical task assignment (Manager → Supervisor → Employee)
+• Real-time status tracking with progress indicators
+• Priority-based task queuing and scheduling
+• Deadline management with automated reminders
+• Quality checkpoint integration for manufacturing processes
+
+Request Processing:
+• Multi-type request system (leave, overtime, mentorship)
+• Automated approval routing based on organizational hierarchy
+• Audit trail maintenance for compliance
+• Integration with calendar systems for scheduling
+• Notification triggers for all stakeholders
+
+SCREENSHOTS NEEDED FOR PART 3:
+• All three dashboard types (employee, supervisor, manager)
+• Task management interfaces
+• AI analytics reports and visualizations
+• Request management workflows
+• Profile and skills management screens
+• Notification system interfaces
+
+=================================================
+PART 4: IMPLEMENTATION PLAN & DEVELOPMENT PHASES
+=================================================
+
+SECTION 4.1: DEVELOPMENT METHODOLOGY
+-----------------------------------
+Approach: Agile Development with Scrum Framework
+Sprint Duration: 2 weeks
+Team Structure: Full-stack developers, UI/UX designer, QA engineer, DevOps engineer
+
+Development Phases:
+Phase 1 (Weeks 1-4): Foundation & Authentication
+• Database schema implementation
+• User authentication system with Google OAuth
+• Basic role-based access control
+• Core API endpoints development
+
+Phase 2 (Weeks 5-8): Core Dashboard Development
+• Employee dashboard with task management
+• Supervisor dashboard with team management
+• Manager dashboard with user management
+• Basic notification system
+
+Phase 3 (Weeks 9-12): Advanced Features
+• AI analytics integration with OpenRouter
+• Request management system
+• Skills and mentorship features
+• Advanced reporting capabilities
+
+Phase 4 (Weeks 13-16): Enhancement & Optimization
+• Performance optimization and caching
+• Advanced security implementations
+• Mobile responsiveness improvements
+• Comprehensive testing and bug fixes
+
+SECTION 4.2: TECHNICAL MILESTONES
+---------------------------------
+Milestone 1: Authentication & User Management
+• Google OAuth integration complete
+• Role-based dashboard routing functional
+• User profile management operational
+
+Milestone 2: Task & Workflow Management
+• Task assignment and tracking system
+• Request approval workflows
+• Notification system with real-time updates
+
+Milestone 3: AI Integration & Analytics
+• OpenRouter AI integration functional
+• Performance analytics with insights
+• Automated report generation
+
+Milestone 4: Production Deployment
+• Security audit completion
+• Performance testing validation
+• Production environment deployment
+
+SECTION 4.3: QUALITY ASSURANCE
+-----------------------------
+Testing Strategy:
+• Unit testing for individual components (Jest, React Testing Library)
+• Integration testing for API endpoints (Supertest)
+• End-to-end testing for user workflows (Cypress)
+• Performance testing for concurrent users (Artillery)
+• Security testing for vulnerabilities (OWASP guidelines)
+
+Quality Metrics:
+• Code coverage minimum: 80%
+• Performance: Page load time < 2 seconds
+• Availability: 99.9% uptime target
+• Security: Zero critical vulnerabilities
+
+SCREENSHOTS NEEDED FOR PART 4:
+• Development timeline/Gantt chart
+• Testing dashboard and coverage reports
+• Performance metrics and monitoring
+• Deployment pipeline visualization
+
+=================================================
+PART 5: BUSINESS IMPACT & FUTURE ROADMAP
+=================================================
+
+SECTION 5.1: EXPECTED BUSINESS OUTCOMES
+--------------------------------------
+Quantitative Benefits:
+• 60% reduction in administrative task completion time
+• 40% improvement in task completion rates
+• 50% faster employee onboarding process
+• 30% reduction in manual reporting efforts
+• 25% improvement in employee satisfaction scores
+
+Qualitative Benefits:
+• Enhanced decision-making through AI-powered insights
+• Improved employee engagement and development
+• Streamlined communication across organizational levels
+• Better compliance and audit trail maintenance
+• Increased transparency in performance evaluation
+
+ROI Analysis:
+• Initial Development Investment: [Insert cost]
+• Annual Operational Savings: [Insert savings]
+• Payback Period: [Insert timeline]
+• 3-Year ROI: [Insert percentage]
+
+SECTION 5.2: SCALABILITY & FUTURE ENHANCEMENTS
+----------------------------------------------
+Immediate Scalability:
+• Cloud-based infrastructure for elastic scaling
+• Microservices architecture for independent scaling
+• Database optimization for large datasets
+• CDN integration for global performance
+
+Future Feature Roadmap:
+• Mobile application development (iOS/Android)
+• Advanced AI features (predictive analytics, automated scheduling)
+• Integration with third-party HR systems (SAP, Workday)
+• IoT device integration for real-time tracking
+• Advanced reporting with business intelligence tools
+• Multi-language support for global deployment
+
+SECTION 5.3: RISK ASSESSMENT & MITIGATION
+-----------------------------------------
+Technical Risks:
+• AI API rate limiting → Implement caching and fallback mechanisms
+• Database performance → Optimize queries and implement indexing
+• Security vulnerabilities → Regular security audits and updates
+
+Business Risks:
+• User adoption resistance → Comprehensive training and change management
+• Data privacy concerns → Strict compliance with GDPR/CCPA regulations
+• Integration challenges → Phased rollout with pilot programs
+
+Mitigation Strategies:
+• Comprehensive backup and disaster recovery plans
+• Regular security assessments and penetration testing
+• User feedback collection and iterative improvements
+• Detailed documentation and training materials
+
+SECTION 5.4: CONCLUSION & RECOMMENDATIONS
+----------------------------------------
+Project Viability:
+The EmpTrack system represents a comprehensive solution for modern employee
+management challenges, combining traditional workflow management with
+cutting-edge AI capabilities.
+
+Key Success Factors:
+• Strong technical architecture with proven technologies
+• User-centric design with role-based functionality
+• Scalable infrastructure for future growth
+• Comprehensive security and compliance measures
+
+Recommendations:
+• Proceed with phased implementation approach
+• Establish dedicated project team with clear responsibilities
+• Implement comprehensive change management strategy
+• Plan for ongoing maintenance and feature enhancement
+
+SCREENSHOTS NEEDED FOR PART 5:
+• ROI analysis charts and projections
+• Scalability architecture diagrams
+• Future roadmap timeline
+• Risk assessment matrix
+• Success metrics dashboard
+
+=================================================
+SUMMARY OF REQUIRED SCREENSHOTS
+=================================================
+
+CRITICAL SCREENSHOTS TO CAPTURE:
+1. Login/Authentication screens (Google OAuth)
+2. Employee Dashboard - complete overview
+3. Supervisor Dashboard - team management view
+4. Manager Dashboard - analytics and user management
+5. Task management interfaces (creation, assignment, tracking)
+6. AI Analytics reports with visualizations
+7. Request management workflows (leave/overtime)
+8. Profile management and skills matrix
+9. Notification system and settings
+10. Mobile responsive views
+11. Database schema visualization
+12. System architecture diagrams
+13. Performance metrics and monitoring dashboards
+14. Security and authentication flow diagrams
+15. API documentation interface
+
+TECHNICAL DIAGRAMS TO CREATE:
+1. System Architecture Diagram
+2. Database Entity Relationship Diagram
+3. User Authentication Flow
+4. API Gateway Architecture
+5. Microservices Communication Flow
+6. Data Flow Diagrams for key processes
+7. Security Architecture Diagram
+8. Deployment Architecture
+9. Class Diagrams for major components
+10. Sequence Diagrams for critical workflows

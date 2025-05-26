@@ -1,5 +1,18 @@
 /* AI Analytics Styles */
 
+/* Gradient background for AI cards */
+.ai-card-gradient {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 /* Glowing effect for the AI button */
 .ai-analytics-button {
   position: relative;

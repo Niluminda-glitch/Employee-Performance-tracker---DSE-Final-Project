@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import MessageFormatter from './MessageFormatter';
 import '@/styles/chatbot.css';
 
 interface ChatbotDialogProps {
@@ -44,8 +45,9 @@ const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ className }) => {
   };
 
   // Handle key press
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       handleSendMessage();
     }
   };
@@ -81,10 +83,15 @@ const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ className }) => {
             <span className="text-xs text-gray-500">
               {isUser ? 'You' : isSystem ? 'Track AI' : 'Assistant'} • {format(new Date(message.timestamp), 'h:mm a')}
             </span>
+            {!isUser && !isSystem && (
+              <span className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
+                AI
+              </span>
+            )}
           </div>
           <div
             className={cn(
-              "rounded-2xl px-4 py-2 break-words message-bubble",
+              "rounded-2xl px-4 py-3 break-words message-bubble",
               isUser
                 ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
                 : isSystem
@@ -92,7 +99,11 @@ const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ className }) => {
                 : "bg-gray-100 text-gray-800"
             )}
           >
-            {message.content}
+            {isUser ? (
+              <span className="text-sm leading-relaxed">{message.content}</span>
+            ) : (
+              <MessageFormatter content={message.content} />
+            )}
           </div>
         </div>
       </motion.div>
@@ -140,16 +151,52 @@ const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ className }) => {
 
             {/* Loading indicator */}
             {isLoading && (
-              <div className="flex items-center space-x-2 text-purple-600 mt-2">
-                <div className="flex space-x-1 mr-2">
-                  <div className="h-2 w-2 bg-purple-500 rounded-full typing-dot"></div>
-                  <div className="h-2 w-2 bg-purple-500 rounded-full typing-dot"></div>
-                  <div className="h-2 w-2 bg-purple-500 rounded-full typing-dot"></div>
+              <motion.div
+                className="flex items-start space-x-3 mb-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center">
+                  <Bot className="h-3 w-3 text-white" />
                 </div>
-                <span className="text-sm">Track AI is thinking...</span>
-              </div>
+                <div className="bg-gray-100 rounded-2xl px-4 py-3 max-w-[80%]">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex space-x-1">
+                      <div className="h-2 w-2 bg-purple-500 rounded-full typing-dot"></div>
+                      <div className="h-2 w-2 bg-purple-500 rounded-full typing-dot"></div>
+                      <div className="h-2 w-2 bg-purple-500 rounded-full typing-dot"></div>
+                    </div>
+                    <span className="text-sm text-gray-600">Track AI is thinking...</span>
+                  </div>
+                </div>
+              </motion.div>
             )}
           </div>
+
+          {/* Quick Actions */}
+          {messages.length <= 1 && (
+            <div className="px-4 py-2 border-t bg-gray-50">
+              <div className="text-xs text-gray-500 mb-2">Quick actions:</div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "How do I manage tasks?",
+                  "Request leave",
+                  "Find a mentor",
+                  "View analytics"
+                ].map((action, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setInputValue(action)}
+                    className="px-3 py-1 text-xs bg-white border border-gray-200 rounded-full hover:bg-purple-50 hover:border-purple-200 transition-colors"
+                    disabled={isLoading}
+                  >
+                    {action}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Input */}
           <div className="p-4 border-t bg-white">
@@ -158,7 +205,7 @@ const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ className }) => {
                 ref={inputRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
                 placeholder="Type your message..."
                 disabled={isLoading}
                 className="flex-1"

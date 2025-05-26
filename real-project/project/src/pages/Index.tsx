@@ -30,8 +30,60 @@ const Index = () => {
   const [tempCredentials, setTempCredentials] = useState<{ email: string, password: string } | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
 
-  // Check for first-time login credentials in localStorage
+  // Check for first-time login credentials in localStorage and handle URL error parameters
   useEffect(() => {
+    // Check for authentication error parameters in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get('error');
+
+    if (errorParam) {
+      console.log('[Index] Authentication error detected in URL:', errorParam);
+
+      // Get custom error message if provided
+      const messageParam = urlParams.get('message');
+
+      // Handle different error types
+      let errorMessage = 'Authentication failed. Please try again.';
+      switch (errorParam) {
+        case 'user_not_registered':
+          errorMessage = messageParam || 'User not registered in the system. Please contact your administrator.';
+          break;
+        case 'account_inactive':
+          errorMessage = messageParam || 'Your account is not active. Please contact your administrator.';
+          break;
+        case 'authentication_failed':
+          errorMessage = messageParam || 'Authentication failed. Please try again.';
+          break;
+        case 'server_error':
+          errorMessage = 'Server error occurred during authentication. Please try again.';
+          break;
+        case 'token_error':
+          errorMessage = 'Authentication token error. Please try again.';
+          break;
+        default:
+          errorMessage = messageParam || 'Authentication failed. Please try again.';
+      }
+
+      // Show error message
+      toast.error(errorMessage, {
+        duration: 5000, // Show for 5 seconds
+        action: {
+          label: 'Try Again',
+          onClick: () => {
+            // Allow user to try Google login again
+            setIsGoogleLoading(false);
+          }
+        }
+      });
+
+      // Clear the error from URL without page reload
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+
+      // Reset Google loading state
+      setIsGoogleLoading(false);
+    }
+
     const storedCredentials = localStorage.getItem('temp_credentials');
     if (storedCredentials) {
       try {
@@ -139,16 +191,26 @@ const Index = () => {
   };
 
   const handleGoogleLogin = async () => {
+    console.log('[Index] Starting Google login process');
     setIsGoogleLoading(true);
 
     try {
-      // Real Google OAuth login via Supabase
-      await googleLogin();
-      // The redirect will happen automatically, and the auth state listener
+      // Real Google OAuth login via backend
+      const success = await googleLogin();
+
+      if (!success) {
+        console.log('[Index] Google login was not successful');
+        setIsGoogleLoading(false);
+        toast.error('Google login failed. Please try again.');
+      }
+      // If successful, the redirect will happen automatically, and the auth state listener
       // will handle the session when the user returns from Google
     } catch (error) {
       console.error("Error in handleGoogleLogin:", error);
       setIsGoogleLoading(false);
+
+      // Show user-friendly error message
+      toast.error('Failed to initiate Google login. Please try again.');
     }
   };
 
@@ -777,7 +839,11 @@ const Index = () => {
                       type="button"
                       variant="outline"
                       className="w-full h-12 bg-white border-gray-200 text-gray-700 hover:bg-gray-50 transition-all hover:border-gray-300 shadow-sm rounded-xl relative overflow-hidden"
-                      onClick={handleGoogleLogin}
+                      onClick={(e) => {
+                        console.log('[Index] Google button clicked!', { isLoading, isGoogleLoading, disabled: isLoading || isGoogleLoading });
+                        e.preventDefault();
+                        handleGoogleLogin();
+                      }}
                       disabled={isLoading || isGoogleLoading}
                     >
                       {isGoogleLoading ? (

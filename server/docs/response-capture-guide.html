@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Response Capture Guide</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .method-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .method-title {
+            color: #495057;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .method-icon {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+        .steps {
+            list-style: none;
+            padding: 0;
+        }
+        .steps li {
+            background: white;
+            margin: 8px 0;
+            padding: 12px 15px;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        .info {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        .button {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.secondary {
+            background: #6c757d;
+        }
+        .button.secondary:hover {
+            background: #545b62;
+        }
+        .screenshot-demo {
+            border: 2px dashed #dee2e6;
+            padding: 20px;
+            text-align: center;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .keyboard-shortcut {
+            background: #343a40;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📸 API Response Capture Guide</h1>
+        <p>Complete guide for capturing and downloading API responses from Swagger UI</p>
+    </div>
+
+    <div class="highlight info">
+        <strong>🎯 Quick Access:</strong> You're currently viewing this guide. 
+        Open <a href="http://localhost:5000/api-docs" target="_blank" style="color: #0056b3;">Swagger UI</a> 
+        in another tab to follow along!
+    </div>
+
+    <div class="method-card">
+        <div class="method-title">
+            <span class="method-icon">📸</span>
+            Method 1: Browser Screenshots
+        </div>
+        <ol class="steps">
+            <li><strong>Navigate to Swagger UI:</strong> <a href="http://localhost:5000/api-docs" target="_blank">http://localhost:5000/api-docs</a></li>
+            <li><strong>Test an endpoint:</strong> Click "Try it out" on any endpoint</li>
+            <li><strong>Execute the request:</strong> Fill parameters and click "Execute"</li>
+            <li><strong>Scroll to response section:</strong> View the response body and headers</li>
+            <li><strong>Take screenshot:</strong>
+                <ul style="margin-top: 10px;">
+                    <li><strong>Windows:</strong> <span class="keyboard-shortcut">Windows + Shift + S</span> (Snipping Tool)</li>
+                    <li><strong>Mac:</strong> <span class="keyboard-shortcut">Cmd + Shift + 4</span></li>
+                    <li><strong>Linux:</strong> <span class="keyboard-shortcut">PrtScn</span> or use screenshot tool</li>
+                </ul>
+            </li>
+        </ol>
+        <div class="screenshot-demo">
+            <p>📱 <strong>Pro Tip:</strong> Use rectangular selection to capture just the response section</p>
+        </div>
+    </div>
+
+    <div class="method-card">
+        <div class="method-title">
+            <span class="method-icon">💾</span>
+            Method 2: Copy & Save Response Data
+        </div>
+        <ol class="steps">
+            <li><strong>Execute API call</strong> in Swagger UI</li>
+            <li><strong>Locate response body</strong> in the response section</li>
+            <li><strong>Select all response text:</strong> <span class="keyboard-shortcut">Ctrl + A</span> (or <span class="keyboard-shortcut">Cmd + A</span> on Mac)</li>
+            <li><strong>Copy the text:</strong> <span class="keyboard-shortcut">Ctrl + C</span> (or <span class="keyboard-shortcut">Cmd + C</span> on Mac)</li>
+            <li><strong>Open text editor</strong> (Notepad, VS Code, etc.)</li>
+            <li><strong>Paste and save</strong> as <span class="code">.json</span> file</li>
+        </ol>
+        <div class="highlight success">
+            <strong>✅ Best for:</strong> Saving structured JSON responses for documentation or testing
+        </div>
+    </div>
+
+    <div class="method-card">
+        <div class="method-title">
+            <span class="method-icon">🔧</span>
+            Method 3: Browser Developer Tools
+        </div>
+        <ol class="steps">
+            <li><strong>Open Developer Tools:</strong> Press <span class="keyboard-shortcut">F12</span> or <span class="keyboard-shortcut">Ctrl + Shift + I</span></li>
+            <li><strong>Go to Network tab</strong> in Developer Tools</li>
+            <li><strong>Execute API call</strong> in Swagger UI</li>
+            <li><strong>Find the request</strong> in the Network tab (look for your endpoint URL)</li>
+            <li><strong>Click on the request</strong> to view details</li>
+            <li><strong>View Response tab</strong> for full response data</li>
+            <li><strong>Right-click</strong> → "Copy response" or "Save as HAR"</li>
+        </ol>
+        <div class="highlight info">
+            <strong>💡 Advanced:</strong> Network tab shows request/response headers, timing, and full HTTP details
+        </div>
+    </div>
+
+    <div class="method-card">
+        <div class="method-title">
+            <span class="method-icon">🤖</span>
+            Method 4: Automated Response Capture
+        </div>
+        <p>Use our custom script to automatically capture responses:</p>
+        <ol class="steps">
+            <li><strong>Open terminal</strong> in the server directory</li>
+            <li><strong>Run capture script:</strong>
+                <div style="margin: 10px 0;">
+                    <div class="code">node scripts/api-response-capture.js</div>
+                    <small style="color: #666;">Captures all sample endpoints</small>
+                </div>
+            </li>
+            <li><strong>Or capture specific endpoint:</strong>
+                <div style="margin: 10px 0;">
+                    <div class="code">node scripts/api-response-capture.js GET /api/users/me</div>
+                    <small style="color: #666;">Captures specific endpoint</small>
+                </div>
+            </li>
+            <li><strong>Find saved files</strong> in <span class="code">server/docs/api-responses/</span></li>
+        </ol>
+        <div class="highlight success">
+            <strong>🎉 Features:</strong> Automatic authentication, JSON formatting, markdown reports, timestamps
+        </div>
+    </div>
+
+    <div class="method-card">
+        <div class="method-title">
+            <span class="method-icon">📋</span>
+            Method 5: Export OpenAPI Specification
+        </div>
+        <ol class="steps">
+            <li><strong>Get JSON specification:</strong> <a href="http://localhost:5000/api-docs.json" target="_blank">http://localhost:5000/api-docs.json</a></li>
+            <li><strong>Save the file:</strong> Right-click → "Save as" → <span class="code">openapi.json</span></li>
+            <li><strong>Import into tools:</strong> Use with Postman, Insomnia, or other API tools</li>
+            <li><strong>Generate documentation:</strong> Use with other documentation generators</li>
+        </ol>
+    </div>
+
+    <div class="highlight warning">
+        <h3>🔐 Authentication Required</h3>
+        <p>Most endpoints require authentication. Here's how to get started:</p>
+        <ol>
+            <li><strong>Test login endpoint first:</strong> <span class="code">POST /api/auth/login</span></li>
+            <li><strong>Copy the JWT token</strong> from the response</li>
+            <li><strong>Click "Authorize" button</strong> in Swagger UI</li>
+            <li><strong>Enter token</strong> in format: <span class="code">Bearer YOUR_JWT_TOKEN</span></li>
+            <li><strong>Now test protected endpoints</strong></li>
+        </ol>
+    </div>
+
+    <div class="method-card">
+        <div class="method-title">
+            <span class="method-icon">🚀</span>
+            Quick Actions
+        </div>
+        <div style="text-align: center; padding: 20px;">
+            <a href="http://localhost:5000/api-docs" target="_blank" class="button">
+                📖 Open Swagger UI
+            </a>
+            <a href="http://localhost:5000/api-docs.json" target="_blank" class="button secondary">
+                📄 Download OpenAPI JSON
+            </a>
+            <a href="#" onclick="runCaptureScript()" class="button">
+                🤖 Run Capture Script
+            </a>
+        </div>
+    </div>
+
+    <div class="highlight info">
+        <h3>📁 File Organization Tips</h3>
+        <ul>
+            <li><strong>Screenshots:</strong> Save with descriptive names like <span class="code">login-response.png</span></li>
+            <li><strong>JSON files:</strong> Use endpoint names like <span class="code">get-users-me.json</span></li>
+            <li><strong>Organize by date:</strong> Create folders like <span class="code">2024-01-15-api-testing/</span></li>
+            <li><strong>Include metadata:</strong> Note the timestamp, user role, and test scenario</li>
+        </ul>
+    </div>
+
+    <div class="method-card">
+        <div class="method-title">
+            <span class="method-icon">💡</span>
+            Pro Tips for Better Documentation
+        </div>
+        <ul class="steps">
+            <li><strong>Test different user roles:</strong> Capture responses for employee, supervisor, and manager roles</li>
+            <li><strong>Include error scenarios:</strong> Test with invalid data to capture error responses</li>
+            <li><strong>Document edge cases:</strong> Test with empty data, missing fields, etc.</li>
+            <li><strong>Add annotations:</strong> Use image editing tools to highlight important parts</li>
+            <li><strong>Create comparison views:</strong> Show before/after states for update operations</li>
+        </ul>
+    </div>
+
+    <script>
+        function runCaptureScript() {
+            alert('To run the capture script:\n\n1. Open terminal in server directory\n2. Run: node scripts/api-response-capture.js\n3. Check server/docs/api-responses/ for results');
+        }
+
+        // Add some interactive features
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add copy buttons to code snippets
+            const codeElements = document.querySelectorAll('.code');
+            codeElements.forEach(function(element) {
+                if (element.textContent.includes('node scripts/') || element.textContent.includes('http://')) {
+                    element.style.cursor = 'pointer';
+                    element.title = 'Click to copy';
+                    element.addEventListener('click', function() {
+                        navigator.clipboard.writeText(element.textContent).then(function() {
+                            const originalText = element.textContent;
+                            element.textContent = 'Copied!';
+                            element.style.background = '#d4edda';
+                            setTimeout(function() {
+                                element.textContent = originalText;
+                                element.style.background = '#f1f3f4';
+                            }, 1000);
+                        });
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

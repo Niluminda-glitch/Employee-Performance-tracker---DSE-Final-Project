@@ -1,0 +1,343 @@
+# Security Flow Diagram - User Authentication (OAuth 2.0 with JWT)
+## Employee Tracking System - Authentication Flow Visualization Guide
+
+### 📋 OVERVIEW
+This document provides detailed instructions for creating a professional Security Flow Diagram that illustrates the OAuth 2.0 authentication process with JWT token management for the Employee Tracking System.
+
+### 🎯 DIAGRAM REQUIREMENTS
+- **Tool Recommendations**: Draw.io, Lucidchart, Visio, or any professional flowchart tool
+- **Format**: Landscape orientation (A4 or A3)
+- **Style**: Professional sequence diagram with clear flow indicators
+- **Colors**: Use consistent color scheme (blue for client, green for Google, orange for backend)
+
+### 🏗️ DIAGRAM STRUCTURE
+
+#### Layout Type: **Sequence Diagram**
+- **Vertical Lanes**: 3 main actors
+- **Horizontal Flow**: Time-based sequence from top to bottom
+- **Message Arrows**: Numbered steps with descriptive labels
+
+### 👥 ACTORS/PARTICIPANTS
+
+#### 1. CLIENT (Browser/Frontend)
+**Position**: Left lane
+**Visual**: 
+- Icon: 🌐 Browser icon or computer
+- Color: Light Blue (#E3F2FD)
+- Label: "Client (Browser/Frontend)"
+- Description: "React Application"
+
+#### 2. GOOGLE IDENTITY PLATFORM
+**Position**: Center lane
+**Visual**:
+- Icon: 🔐 Google logo or shield
+- Color: Light Green (#E8F5E8)
+- Label: "Google Identity Platform"
+- Description: "OAuth 2.0 Provider"
+
+#### 3. EMPTRACK BACKEND
+**Position**: Right lane
+**Visual**:
+- Icon: 🏢 Server icon
+- Color: Light Orange (#FFF3E0)
+- Label: "EmpTrack Backend"
+- Description: "User Service + JWT Handler"
+
+### 🔄 AUTHENTICATION FLOW STEPS
+
+#### Step 1: Initiate Authentication
+**From**: Client → Google
+**Arrow**: Solid blue arrow (→)
+**Label**: "1. Sign in with Google"
+**Details**:
+```
+Action: User clicks "Sign in with Google" button
+Method: GET request to Google OAuth endpoint
+Parameters: client_id, redirect_uri, scope, response_type
+URL: https://accounts.google.com/oauth/authorize
+```
+
+#### Step 2: Google Authentication Page
+**From**: Google → Client
+**Arrow**: Dashed green arrow (←)
+**Label**: "2. Redirect to Google Login"
+**Details**:
+```
+Action: Google displays authentication page
+Response: HTML login form
+User Action: Enter Google credentials
+```
+
+#### Step 3: User Authentication & Consent
+**Internal**: Google (self-loop)
+**Arrow**: Curved arrow within Google lane
+**Label**: "3. User Authentication & Consent"
+**Details**:
+```
+Process: Validate user credentials
+Action: Display consent screen for permissions
+Permissions: email, profile, openid
+User Action: Grant consent
+```
+
+#### Step 4: Authorization Code Response
+**From**: Google → Client
+**Arrow**: Solid green arrow (←)
+**Label**: "4. Redirect with Auth Code"
+**Details**:
+```
+Action: Redirect to EmpTrack callback URL
+Method: GET redirect
+URL: https://emptrack.com/auth/callback?code=AUTH_CODE&state=STATE
+Parameters: authorization_code, state
+```
+
+#### Step 5: Forward Auth Code to Backend
+**From**: Client → Backend
+**Arrow**: Solid blue arrow (→)
+**Label**: "5. Send Auth Code to Backend"
+**Details**:
+```
+Action: Forward authorization code to backend
+Method: POST /auth/google/callback
+Headers: Content-Type: application/json
+Body: { "code": "AUTH_CODE", "state": "STATE" }
+```
+
+#### Step 6: Exchange Code for Tokens
+**From**: Backend → Google
+**Arrow**: Solid orange arrow (→)
+**Label**: "6. Exchange Auth Code for Tokens"
+**Details**:
+```
+Action: Exchange authorization code for tokens
+Method: POST to Google Token endpoint
+URL: https://oauth2.googleapis.com/token
+Parameters: code, client_id, client_secret, grant_type
+Response: ID Token + Access Token
+```
+
+#### Step 7: Token Validation & User Info
+**Internal**: Backend (self-loop)
+**Arrow**: Curved arrow within Backend lane
+**Label**: "7. Validate ID Token & Extract User Info"
+**Details**:
+```
+Process: 
+- Verify JWT signature using Google's public keys
+- Validate token expiration and issuer
+- Extract user information (email, name, google_id)
+- Check user exists in Supabase database
+- Create user if first-time login
+```
+
+#### Step 8: Generate EmpTrack JWT
+**Internal**: Backend (self-loop)
+**Arrow**: Curved arrow within Backend lane
+**Label**: "8. Generate EmpTrack JWT"
+**Details**:
+```
+Process: Create application-specific JWT
+Payload: {
+  "userId": "uuid",
+  "email": "user@example.com",
+  "role": "employee|supervisor|manager",
+  "department_id": "uuid",
+  "iat": timestamp,
+  "exp": timestamp + 24h
+}
+Secret: Application JWT secret key
+Algorithm: HS256
+```
+
+#### Step 9: Return JWT to Client
+**From**: Backend → Client
+**Arrow**: Solid orange arrow (←)
+**Label**: "9. Return JWT & User Data"
+**Details**:
+```
+Action: Send JWT and user information to client
+Method: HTTP 200 OK response
+Headers: Set-Cookie (HttpOnly, Secure, SameSite)
+Body: {
+  "token": "JWT_TOKEN",
+  "user": { user_data },
+  "expiresIn": "24h"
+}
+```
+
+#### Step 10: Store JWT Securely
+**Internal**: Client (self-loop)
+**Arrow**: Curved arrow within Client lane
+**Label**: "10. Store JWT Securely"
+**Details**:
+```
+Storage Method: HttpOnly Cookie (Recommended)
+Rationale: 
+- Prevents XSS attacks
+- Automatic inclusion in requests
+- Secure flag for HTTPS only
+- SameSite protection against CSRF
+
+Alternative: Browser Memory (sessionStorage)
+- For single-session applications
+- Cleared on tab close
+- Requires manual header management
+```
+
+#### Step 11: Authenticated API Requests
+**From**: Client → Backend
+**Arrow**: Solid blue arrow (→)
+**Label**: "11. API Requests with JWT"
+**Details**:
+```
+Action: Include JWT in subsequent API calls
+Method: Any HTTP method (GET, POST, PUT, DELETE)
+Headers: 
+- Authorization: Bearer JWT_TOKEN
+- Or automatic cookie inclusion
+Validation: Backend verifies JWT on each request
+```
+
+### 🔒 SECURITY CONSIDERATIONS
+
+#### JWT Storage Options:
+
+**Option 1: HttpOnly Cookies (RECOMMENDED)**
+```
+Pros:
+✅ Immune to XSS attacks
+✅ Automatic inclusion in requests
+✅ Secure flag for HTTPS
+✅ SameSite protection
+✅ Server-controlled expiration
+
+Cons:
+❌ Vulnerable to CSRF (mitigated by SameSite)
+❌ Requires CORS configuration
+```
+
+**Option 2: Browser Memory (sessionStorage)**
+```
+Pros:
+✅ Cleared on tab close
+✅ Not sent automatically (CSRF protection)
+✅ Full client control
+
+Cons:
+❌ Vulnerable to XSS
+❌ Manual header management required
+❌ Lost on page refresh (needs refresh token)
+```
+
+### 🎨 VISUAL FORMATTING GUIDELINES
+
+#### Color Scheme:
+- **Client Actions**: Blue (#2196F3)
+- **Google Actions**: Green (#4CAF50)
+- **Backend Actions**: Orange (#FF9800)
+- **Security Elements**: Red (#F44336)
+- **Success Flow**: Dark Green (#388E3C)
+- **Error Flow**: Dark Red (#D32F2F)
+
+#### Arrow Styles:
+- **Solid Arrows**: Direct API calls/redirects
+- **Dashed Arrows**: User interface interactions
+- **Thick Arrows**: Critical security steps
+- **Dotted Arrows**: Optional or conditional flows
+
+#### Text Formatting:
+- **Step Numbers**: Bold, large font (14pt)
+- **Action Labels**: Bold, medium font (12pt)
+- **Details**: Regular, small font (10pt)
+- **Actor Names**: Bold, all caps (14pt)
+
+### 📊 ADDITIONAL DIAGRAM ELEMENTS
+
+#### Security Badges:
+- 🔐 **OAuth 2.0 Compliant**
+- 🛡️ **JWT Secured**
+- ✅ **HTTPS Required**
+- 🔒 **XSS Protected**
+- 🚫 **CSRF Mitigated**
+
+#### Error Handling Flows:
+Add dotted red arrows for error scenarios:
+- Invalid credentials
+- Expired tokens
+- Network failures
+- Server errors
+
+#### Legend/Key:
+```
+→ Direct API Call
+⤴ User Redirect
+🔄 Internal Processing
+🔐 Security Validation
+💾 Data Storage
+```
+
+### 📐 LAYOUT SPECIFICATIONS
+
+#### Dimensions:
+- **Lane Width**: 8cm each
+- **Step Height**: 3cm
+- **Arrow Length**: Variable
+- **Margin**: 2cm all sides
+
+#### Positioning:
+```
+[Client Lane]    [Google Lane]    [Backend Lane]
+     |                |                 |
+   Step 1 ---------> Step 2
+     |                |                 |
+   Step 4 <--------- Step 3
+     |                |                 |
+   Step 5 --------------------------> Step 6
+     |                |                 |
+   Step 9 <-------------------------- Step 8
+     |                |                 |
+   Step 10           |                 |
+     |                |                 |
+   Step 11 --------------------------> Validate
+```
+
+### ✅ QUALITY CHECKLIST
+- [ ] All 11 steps clearly numbered and labeled
+- [ ] Three actor lanes properly positioned
+- [ ] Color coding consistent throughout
+- [ ] Security considerations highlighted
+- [ ] JWT storage rationale explained
+- [ ] Error handling paths included
+- [ ] Professional appearance
+- [ ] Readable at standard print sizes
+- [ ] Legend/key included
+- [ ] Technical details accurate
+
+### 🔧 TECHNICAL SPECIFICATIONS
+
+#### OAuth 2.0 Parameters:
+```
+client_id: 281968550707-7mf3ffguc7hfbpmr5f1ha6r1stodjk54.apps.googleusercontent.com
+redirect_uri: https://emptrack.com/auth/callback
+scope: openid email profile
+response_type: code
+grant_type: authorization_code
+```
+
+#### JWT Configuration:
+```
+Algorithm: HS256
+Expiration: 24 hours
+Issuer: emptrack.com
+Audience: emptrack-users
+Claims: userId, email, role, department_id, iat, exp
+```
+
+### 📋 FINAL NOTES
+- Save in multiple formats (PDF, PNG, SVG)
+- Ensure diagram is readable when printed
+- Include creation date and version
+- Consider creating simplified version for presentations
+- Validate technical accuracy with development team
+- Update diagram when authentication flow changes

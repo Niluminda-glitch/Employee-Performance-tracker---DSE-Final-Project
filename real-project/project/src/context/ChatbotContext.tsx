@@ -29,21 +29,21 @@ import { generateText, generateMockResponse } from '../integrations/github/clien
 
 // Function to call the GitHub AI API
 const callAIAPI = async (prompt: string): Promise<string> => {
-  console.log("Calling GitHub AI API with prompt:", prompt.substring(0, 100) + "...");
+  console.log("Calling OpenRouter AI API with prompt:", prompt.substring(0, 100) + "...");
 
   try {
-    // Call the GitHub AI API using our client
-    console.log("Using GitHub AI API client");
+    // Call the OpenRouter AI API using our client
+    console.log("Using OpenRouter AI API client");
     const responseText = await generateText(prompt, {
       temperature: 0.7,
       top_p: 0.1,
       max_tokens: 2048,
-      model: "deepseek/DeepSeek-V3-0324" // Updated to use DeepSeek model
+      model: "tngtech/deepseek-r1t-chimera:free" // Updated to use DeepSeek model via OpenRouter
     });
 
     return responseText;
   } catch (apiError) {
-    console.error("Error in GitHub AI API call:", apiError);
+    console.error("Error in OpenRouter AI API call:", apiError);
 
     // Provide a mock response
     console.log("API error, using mock response instead");
@@ -121,6 +121,14 @@ export const ChatbotProvider: React.FC<{ children: ReactNode }> = ({ children })
 You are Track AI, an assistant for the EmpTrack application, which is a garment industry employee management system.
 ${userContext}
 
+IMPORTANT FORMATTING GUIDELINES:
+- Structure your responses clearly with proper spacing
+- Use simple numbered lists (1., 2., 3.) or bullet points (-) when providing multiple items
+- Separate different topics with double line breaks
+- DO NOT use markdown formatting like **bold**, ### headers, or --- separators
+- Keep responses concise but informative
+- Use clear, professional language without special formatting characters
+
 The application has the following features:
 - Employee Dashboard with task management
 - Supervisor Dashboard for team management
@@ -138,7 +146,14 @@ ${contextMessages.map(msg => `${msg.role === 'user' ? 'User' : 'Track AI'}: ${ms
 
 User's new message: ${message}
 
-Provide a helpful, concise response. If you don't know something specific about the application, you can provide general guidance related to the garment industry or employee management.
+Provide a helpful, well-formatted response that is:
+- Specific to the user's role and context when possible
+- Structured with clear lists and proper spacing
+- Actionable with specific steps the user can take
+- Professional yet friendly in tone
+- Focused on the EmpTrack application features
+
+If you don't know something specific about the application, provide general guidance related to the garment industry or employee management, but always try to relate it back to EmpTrack features when possible.
       `;
 
       // Get response text - this will either be from the API or a mock response

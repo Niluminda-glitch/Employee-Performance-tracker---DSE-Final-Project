@@ -1,0 +1,402 @@
+# Security Flow Diagram - API Request Authorization
+## Employee Tracking System - API Authorization Flow Visualization Guide
+
+### 📋 OVERVIEW
+This document provides detailed instructions for creating a professional Security Flow Diagram that illustrates the API request authorization process with JWT validation and role-based access control (RBAC) for the Employee Tracking System.
+
+### 🎯 DIAGRAM REQUIREMENTS
+- **Tool Recommendations**: Draw.io, Lucidchart, Visio, or any professional flowchart tool
+- **Format**: Landscape orientation (A4 or A3)
+- **Style**: Professional sequence diagram with clear authorization checkpoints
+- **Colors**: Use consistent color scheme (blue for client, purple for gateway, green for microservices)
+
+### 🏗️ DIAGRAM STRUCTURE
+
+#### Layout Type: **Sequence Diagram with Decision Points**
+- **Vertical Lanes**: 4 main components
+- **Horizontal Flow**: Request-response cycle from left to right
+- **Decision Diamonds**: Authorization checkpoints
+- **Message Arrows**: Numbered steps with security indicators
+
+### 🏛️ SYSTEM COMPONENTS/PARTICIPANTS
+
+#### 1. CLIENT (Frontend Application)
+**Position**: Left lane
+**Visual**: 
+- Icon: 💻 Computer/Browser icon
+- Color: Light Blue (#E3F2FD)
+- Label: "Client (Frontend)"
+- Description: "React Application with JWT"
+
+#### 2. API GATEWAY
+**Position**: Center-left lane
+**Visual**:
+- Icon: 🚪 Gateway/Shield icon
+- Color: Light Purple (#F3E5F5)
+- Label: "API Gateway"
+- Description: "JWT Validation & Routing"
+
+#### 3. MICROSERVICE
+**Position**: Center-right lane
+**Visual**:
+- Icon: ⚙️ Service/Gear icon
+- Color: Light Green (#E8F5E8)
+- Label: "Microservice"
+- Description: "Business Logic & Fine-grained Auth"
+
+#### 4. DATABASE/RESOURCES
+**Position**: Right lane
+**Visual**:
+- Icon: 🗄️ Database icon
+- Color: Light Gray (#F5F5F5)
+- Label: "Database/Resources"
+- Description: "Supabase & Protected Resources"
+
+### 🔐 AUTHORIZATION FLOW STEPS
+
+#### Step 1: Client API Request
+**From**: Client → API Gateway
+**Arrow**: Solid blue arrow (→)
+**Label**: "1. API Request with JWT"
+**Details**:
+```
+Action: Client sends authenticated API request
+Method: GET/POST/PUT/DELETE
+Headers: {
+  "Authorization": "Bearer JWT_TOKEN",
+  "Content-Type": "application/json"
+}
+Example: GET /api/tasks/user/123
+JWT Claims: { userId, role, department_id, exp }
+```
+
+#### Step 2: Gateway Receives Request
+**Internal**: API Gateway (self-loop)
+**Arrow**: Curved arrow within Gateway lane
+**Label**: "2. Receive & Parse Request"
+**Details**:
+```
+Process: Extract and parse incoming request
+Actions:
+- Extract JWT from Authorization header
+- Parse request path and method
+- Identify target microservice
+- Log request for audit trail
+```
+
+#### Step 3: JWT Validation
+**Internal**: API Gateway (decision diamond)
+**Arrow**: Diamond shape with validation checks
+**Label**: "3. Validate JWT"
+**Details**:
+```
+Validation Checks:
+✅ Signature verification (using secret key)
+✅ Token expiration (exp claim)
+✅ Token issuer (iss claim)
+✅ Token audience (aud claim)
+✅ Token format and structure
+
+Success: Continue to Step 4
+Failure: Return 401 Unauthorized
+```
+
+#### Step 4: Coarse-Grained RBAC Check
+**Internal**: API Gateway (decision diamond)
+**Arrow**: Diamond shape with role checks
+**Label**: "4. Coarse-Grained RBAC"
+**Details**:
+```
+Role-Based Access Control:
+- Extract role from JWT claims
+- Check endpoint access permissions
+- Validate department-level access
+
+Role Permissions:
+👤 Employee: Read own data, submit requests
+👨‍💼 Supervisor: Employee permissions + team management
+👔 Manager: Supervisor permissions + department oversight
+
+Success: Continue to Step 5
+Failure: Return 403 Forbidden
+```
+
+#### Step 5: Route to Microservice
+**From**: API Gateway → Microservice
+**Arrow**: Solid purple arrow (→)
+**Label**: "5. Route to Microservice"
+**Details**:
+```
+Action: Forward request to appropriate microservice
+Headers: {
+  "Authorization": "Bearer JWT_TOKEN",
+  "X-User-ID": "extracted_user_id",
+  "X-User-Role": "extracted_role",
+  "X-Department-ID": "extracted_dept_id"
+}
+Routing Rules:
+- /api/tasks/* → Task Service
+- /api/users/* → User Service
+- /api/requests/* → Request Service
+```
+
+#### Step 6: Microservice Receives Request
+**Internal**: Microservice (self-loop)
+**Arrow**: Curved arrow within Microservice lane
+**Label**: "6. Receive Request"
+**Details**:
+```
+Process: Parse forwarded request
+Actions:
+- Extract user context from headers
+- Identify requested resource/action
+- Prepare for fine-grained authorization
+- Load user permissions if needed
+```
+
+#### Step 7: Fine-Grained Authorization
+**Internal**: Microservice (decision diamond)
+**Arrow**: Diamond shape with resource checks
+**Label**: "7. Fine-Grained Authorization"
+**Details**:
+```
+Resource-Level Checks:
+🔍 Resource Ownership: User can only access own data
+🔍 Hierarchical Access: Supervisors access team data
+🔍 Department Boundaries: Users access dept resources
+🔍 Action Permissions: Create/Read/Update/Delete rights
+
+Examples:
+- Task Access: Owner, Assignee, or Supervisor
+- User Profile: Self or Manager
+- Department Data: Department members only
+- Sensitive Operations: Manager+ only
+
+Success: Continue to Step 8a
+Failure: Go to Step 8b
+```
+
+#### Step 8a: Process Authorized Request
+**From**: Microservice → Database
+**Arrow**: Solid green arrow (→)
+**Label**: "8a. Process Request (Authorized)"
+**Details**:
+```
+Action: Execute business logic
+Process:
+- Query/modify database
+- Apply business rules
+- Generate response data
+- Log successful operation
+
+Database Operations:
+- SELECT with user/dept filters
+- INSERT with ownership assignment
+- UPDATE with permission checks
+- DELETE with cascade rules
+```
+
+#### Step 8b: Return Authorization Error
+**From**: Microservice → API Gateway
+**Arrow**: Solid red arrow (←)
+**Label**: "8b. Return 403 Forbidden"
+**Details**:
+```
+Action: Return authorization error
+Response: {
+  "error": "Forbidden",
+  "message": "Insufficient permissions",
+  "code": 403,
+  "details": "User lacks permission for this resource"
+}
+Log: Security violation attempt
+```
+
+#### Step 9a: Return Success Response
+**From**: Database → Microservice → API Gateway → Client
+**Arrow**: Solid green arrows (←←←)
+**Label**: "9a. Return Success Response"
+**Details**:
+```
+Response Flow:
+Database → Microservice: Query results
+Microservice → Gateway: Formatted response
+Gateway → Client: Final response
+
+Response Format: {
+  "success": true,
+  "data": { response_data },
+  "timestamp": "ISO_8601",
+  "requestId": "unique_id"
+}
+Status: 200 OK (or appropriate success code)
+```
+
+#### Step 9b: Return Error Response
+**From**: API Gateway → Client
+**Arrow**: Solid red arrow (←)
+**Label**: "9b. Return Error Response"
+**Details**:
+```
+Error Response: {
+  "success": false,
+  "error": "Unauthorized/Forbidden",
+  "message": "Access denied",
+  "code": 401/403,
+  "timestamp": "ISO_8601"
+}
+Headers: {
+  "WWW-Authenticate": "Bearer"
+}
+```
+
+### 🛡️ SECURITY LAYERS
+
+#### Layer 1: API Gateway Security
+```
+🔐 JWT Signature Validation
+⏰ Token Expiration Check
+🏢 Issuer Verification
+👥 Audience Validation
+📊 Rate Limiting
+🚫 IP Blacklisting
+📝 Request Logging
+```
+
+#### Layer 2: Microservice Security
+```
+🔍 Resource Ownership
+👤 User Context Validation
+🏛️ Department Boundaries
+⚡ Action Permissions
+📋 Business Rule Enforcement
+🔒 Data Filtering
+📊 Audit Logging
+```
+
+### 🎨 VISUAL FORMATTING GUIDELINES
+
+#### Color Scheme:
+- **Client Requests**: Blue (#2196F3)
+- **Gateway Processing**: Purple (#9C27B0)
+- **Microservice Logic**: Green (#4CAF50)
+- **Database Operations**: Gray (#607D8B)
+- **Success Flow**: Dark Green (#388E3C)
+- **Error Flow**: Dark Red (#D32F2F)
+- **Security Checks**: Orange (#FF9800)
+
+#### Shape Guidelines:
+- **Process Steps**: Rectangles with rounded corners
+- **Decision Points**: Diamond shapes
+- **Start/End**: Oval shapes
+- **Data Stores**: Cylinder shapes
+- **Security Checks**: Shield-shaped elements
+
+#### Arrow Styles:
+- **Solid Arrows**: Direct API calls
+- **Dashed Arrows**: Conditional flows
+- **Thick Arrows**: Critical security steps
+- **Dotted Arrows**: Error/failure paths
+- **Double Arrows**: Bidirectional communication
+
+### 📊 AUTHORIZATION MATRIX
+
+#### Role-Based Permissions:
+```
+Resource/Action    | Employee | Supervisor | Manager
+-------------------|----------|------------|--------
+Own Tasks          | CRUD     | CRUD       | CRUD
+Team Tasks         | R        | CRUD       | CRUD
+Dept Tasks         | -        | R          | CRUD
+Own Profile        | RU       | RU         | RU
+Team Profiles      | R        | RU         | CRUD
+Dept Profiles      | -        | R          | CRUD
+Leave Requests     | CRUD     | CRUD+A     | CRUD+A
+Overtime Requests  | CRUD     | CRUD+A     | CRUD+A
+Reports            | Own      | Team       | Dept
+Admin Functions    | -        | -          | Limited
+
+Legend: C=Create, R=Read, U=Update, D=Delete, A=Approve
+```
+
+### 📐 LAYOUT SPECIFICATIONS
+
+#### Dimensions:
+- **Lane Width**: 6cm each
+- **Step Height**: 2.5cm
+- **Decision Diamond**: 4cm x 2cm
+- **Arrow Length**: Variable
+- **Margin**: 1.5cm all sides
+
+#### Flow Layout:
+```
+[Client]    [API Gateway]    [Microservice]    [Database]
+    |             |                |               |
+  Step 1 -----> Step 2
+    |             |                |               |
+    |           Step 3 (Decision)
+    |             |                |               |
+    |           Step 4 (Decision)
+    |             |                |               |
+    |         Step 5 ----------> Step 6
+    |             |                |               |
+    |             |              Step 7 (Decision)
+    |             |                |               |
+    |             |              Step 8a -------> Process
+    |             |                |               |
+  Step 9a <----- Response <------ Step 9a <------ Result
+    |             |                |               |
+  Step 9b <----- Error Response
+```
+
+### ✅ QUALITY CHECKLIST
+- [ ] All 9 steps clearly numbered and labeled
+- [ ] Four component lanes properly positioned
+- [ ] Security decision points highlighted
+- [ ] Color coding consistent throughout
+- [ ] Authorization matrix included
+- [ ] Error handling paths shown
+- [ ] Professional appearance
+- [ ] Technical accuracy verified
+- [ ] Legend/key included
+- [ ] Readable at standard sizes
+
+### 🔧 TECHNICAL SPECIFICATIONS
+
+#### JWT Validation Parameters:
+```
+Algorithm: HS256
+Secret: Application JWT secret
+Required Claims: userId, role, department_id, exp, iat
+Optional Claims: permissions, features
+Expiration: 24 hours maximum
+Issuer: emptrack.com
+Audience: emptrack-api
+```
+
+#### API Gateway Configuration:
+```
+Rate Limiting: 1000 requests/hour per user
+Timeout: 30 seconds
+CORS: Configured for frontend domain
+Logging: All requests with user context
+Caching: Public endpoints only
+```
+
+#### Microservice Authorization:
+```
+Context Headers: X-User-ID, X-User-Role, X-Department-ID
+Permission Engine: Role + Resource + Action
+Audit Logging: All authorization decisions
+Error Handling: Graceful degradation
+```
+
+### 📋 FINAL NOTES
+- Save in multiple formats (PDF, PNG, SVG)
+- Ensure decision points are clearly visible
+- Include security layer explanations
+- Validate authorization logic with security team
+- Update diagram when permissions change
+- Consider creating role-specific views
+- Test diagram readability when printed
+- Include version control for updates

@@ -2,9 +2,13 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models'); // Adjust path if models folder is elsewhere
+const db = require('../models'); // Import the entire db object
+const { Op } = require('sequelize'); // Import Sequelize operators
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
+// Extract User model from db
+const User = db.User;
 
 const router = express.Router();
 
@@ -22,7 +26,7 @@ passport.use(new GoogleStrategy({
       // Check if user exists by google_id or email
       let user = await User.findOne({
         where: {
-          [User.sequelize.Op.or]: [
+          [Op.or]: [
             { google_id: profile.id },
             { email: profile.emails[0].value }
           ]
@@ -30,22 +34,21 @@ passport.use(new GoogleStrategy({
       });
 
       if (!user) {
-        // Create new user if not exists
-        console.log('[GoogleStrategy] Creating new user from Google profile');
-        user = await User.create({
-          email: profile.emails[0].value,
-          full_name: profile.displayName,
-          google_id: profile.id,
-          avatar_url: profile.photos[0]?.value,
-          status: 'active',
-          role: 'employee' // Default role
-        });
+        // User not found in database - reject authentication
+        console.log('[GoogleStrategy] User not found in database for email:', profile.emails[0].value);
+        return done(new Error('User not registered in the system. Please contact your administrator.'), null);
       } else if (!user.google_id) {
         // Update existing user with Google ID if they signed up with email/password
         console.log('[GoogleStrategy] Updating existing user with Google ID');
         user.google_id = profile.id;
         user.avatar_url = profile.photos[0]?.value || user.avatar_url;
         await user.save();
+      }
+
+      // Check if user account is active
+      if (user.status !== 'active') {
+        console.log('[GoogleStrategy] User account is not active:', user.status);
+        return done(new Error('User account is not active. Please contact your administrator.'), null);
       }
 
       return done(null, user);
@@ -288,56 +291,100 @@ router.get('/google', passport.authenticate('google', {
 }));
 
 // GET /api/auth/google/callback
-router.get('/google/callback', passport.authenticate('google', { session: false }), (req, res) => {
-    try {
-        // Generate JWT token
-        const payload = {
-            user: {
-                id: req.user.id,
-                role: req.user.role
-            }
-        };
+router.get('/google/callback', (req, res, next) => {
+    // Custom error handling for passport authentication
+    passport.authenticate('google', { session: false }, (err, user, info) => {
+        try {
+            // Check if there was an authentication error
+            if (err) {
+                console.error('Google authentication error:', err.message);
 
-        const secret = process.env.JWT_SECRET;
-        if (!secret) {
-            console.error("FATAL ERROR: JWT_SECRET is not defined.");
-            return res.status(500).send("Server configuration error");
-        }
-
-        jwt.sign(
-            payload,
-            secret,
-            { expiresIn: '1h' },
-            (err, token) => {
-                if (err) {
-                    console.error('Error signing JWT:', err);
-                    return res.redirect('/auth?error=token_error');
+                // Handle specific error types
+                let errorType = 'authentication_failed';
+                if (err.message.includes('User not registered')) {
+                    errorType = 'user_not_registered';
+                } else if (err.message.includes('not active')) {
+                    errorType = 'account_inactive';
+                } else if (err.message.includes('server') || err.message.includes('database')) {
+                    errorType = 'server_error';
                 }
 
-                // Redirect to frontend with token
-                console.log(`Google login successful for user ID: ${req.user.id}, email: ${req.user.email}`);
-
-                // Create a URL-safe base64 encoded token
-                const encodedToken = Buffer.from(JSON.stringify({
-                    token,
-                    user: {
-                        id: req.user.id,
-                        email: req.user.email,
-                        full_name: req.user.full_name,
-                        role: req.user.role,
-                        status: req.user.status,
-                        avatar_url: req.user.avatar_url
-                    }
-                })).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-                // Redirect to frontend auth callback page with the encoded data
-                res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/callback?data=${encodedToken}`);
+                return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth?error=${errorType}&message=${encodeURIComponent(err.message)}`);
             }
-        );
-    } catch (error) {
-        console.error('Google callback error:', error);
-        res.redirect('/auth?error=server_error');
-    }
+
+            // Check if authentication failed (no user returned)
+            if (!user) {
+                console.error('Google authentication failed - no user object');
+                return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth?error=authentication_failed`);
+            }
+
+            // Generate JWT token
+            const payload = {
+                user: {
+                    id: user.id,
+                    role: user.role
+                }
+            };
+
+            const secret = process.env.JWT_SECRET;
+            if (!secret) {
+                console.error("FATAL ERROR: JWT_SECRET is not defined.");
+                return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth?error=server_error`);
+            }
+
+            jwt.sign(
+                payload,
+                secret,
+                { expiresIn: '1h' },
+                (err, token) => {
+                    if (err) {
+                        console.error('Error signing JWT:', err);
+                        return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth?error=token_error`);
+                    }
+
+                    // Redirect to frontend with token and role-based redirection
+                    console.log(`Google login successful for user ID: ${user.id}, email: ${user.email}, role: ${user.role}`);
+
+                    // Create a URL-safe base64 encoded token
+                    const encodedToken = Buffer.from(JSON.stringify({
+                        token,
+                        user: {
+                            id: user.id,
+                            email: user.email,
+                            full_name: user.full_name,
+                            role: user.role,
+                            status: user.status,
+                            avatar_url: user.avatar_url,
+                            department_id: user.department_id,
+                            supervisor_id: user.supervisor_id
+                        }
+                    })).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+                    // Determine redirect URL based on user role
+                    let redirectPath = '/dashboard'; // Default dashboard
+                    switch (user.role) {
+                        case 'manager':
+                            redirectPath = '/manager-dashboard';
+                            break;
+                        case 'supervisor':
+                            redirectPath = '/supervisor-dashboard';
+                            break;
+                        case 'employee':
+                            redirectPath = '/employee-dashboard';
+                            break;
+                        default:
+                            redirectPath = '/dashboard';
+                    }
+
+                    // Redirect to frontend auth callback page with the encoded data and role-based path
+                    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/callback?data=${encodedToken}&redirect=${encodeURIComponent(redirectPath)}`);
+                }
+            );
+        } catch (error) {
+            console.error('Google callback error:', error);
+            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth?error=server_error`);
+        }
+    })(req, res, next);
 });
 
 module.exports = router;

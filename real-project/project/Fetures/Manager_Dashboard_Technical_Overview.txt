@@ -1,0 +1,623 @@
+================================================================================
+                    MANAGER DASHBOARD - TECHNICAL FEATURE OVERVIEW
+================================================================================
+
+This document provides detailed technical analysis of Manager Dashboard features,
+focusing on system interactions, database relationships, and architectural patterns
+for creating comprehensive class diagrams and sequence diagrams.
+
+================================================================================
+1. USER MANAGEMENT SYSTEM
+================================================================================
+
+FEATURE OVERVIEW:
+Complete CRUD operations for user lifecycle management with role-based access control,
+QR code generation, and real-time validation.
+
+UNIQUE DIFFERENTIATORS:
+- QR Code credential sharing for new users
+- Real-time role-based dashboard redirection
+- Integrated Google OAuth with Supabase verification
+- Self-protection mechanisms (managers can't deactivate themselves)
+- Hierarchical supervisor-employee relationship management
+
+SYSTEM INTERACTIONS:
+
+User → Manager Dashboard → AuthMiddleware → Database
+Manager → UserController → Supabase → EmailService → QRGenerator
+
+DATABASE RELATIONSHIPS:
+- users table (primary entity)
+- departments table (foreign key relationship)
+- user_skills junction table (many-to-many)
+- supervisor relationships (self-referencing foreign key)
+
+KEY CLASSES FOR CLASS DIAGRAM:
+- ManagerDashboard (React Component)
+- UserController (Backend Controller)
+- User (Database Model)
+- Department (Database Model)
+- AuthMiddleware (Security Layer)
+- QRCodeGenerator (Utility Service)
+- EmailVerificationService
+
+SEQUENCE DIAGRAM FLOW:
+1. Manager clicks "Add User"
+2. Form validation (client-side)
+3. API call to /manager/users (POST)
+4. AuthMiddleware validates manager role
+5. UserController processes request
+6. Database transaction (create user + assign relationships)
+7. QR code generation with credentials
+8. Email notification (optional)
+9. Real-time UI update
+10. Success notification
+
+CRITICAL INTERACTIONS:
+- Role validation at multiple layers
+- Transactional user creation with relationship assignments
+- Real-time state synchronization
+- Error handling and rollback mechanisms
+
+================================================================================
+2. DEPARTMENT MANAGEMENT SYSTEM
+================================================================================
+
+FEATURE OVERVIEW:
+Hierarchical department structure management with headcount tracking,
+performance metrics aggregation, and organizational chart capabilities.
+
+UNIQUE DIFFERENTIATORS:
+- Real-time headcount calculation
+- Department-level performance aggregation
+- Manager-only creation/modification rights
+- Integrated with user assignment workflows
+
+SYSTEM INTERACTIONS:
+
+Manager → DepartmentController → Database → UserAggregationService
+Department Changes → Real-time Updates → All Connected Clients
+
+DATABASE RELATIONSHIPS:
+- departments table (primary)
+- users table (department_id foreign key)
+- department_metrics (calculated fields)
+- audit_logs (change tracking)
+
+KEY CLASSES FOR CLASS DIAGRAM:
+- DepartmentManager (React Component)
+- DepartmentController (Backend)
+- Department (Model)
+- DepartmentMetrics (Calculated Entity)
+- UserAggregationService
+- AuditLogger
+
+SEQUENCE DIAGRAM FLOW:
+1. Manager creates/edits department
+2. Validation and authorization
+3. Database transaction
+4. Headcount recalculation
+5. Metrics aggregation update
+6. Real-time broadcast to connected clients
+7. Audit log creation
+8. UI state update
+
+================================================================================
+3. AI-POWERED ANALYTICS ENGINE
+================================================================================
+
+FEATURE OVERVIEW:
+Advanced AI analytics using OpenRouter API with DeepSeek-V3 model for
+employee performance analysis, predictive insights, and management recommendations.
+
+UNIQUE DIFFERENTIATORS:
+- Industry-specific AI prompts for garment manufacturing
+- Structured AI response parsing with fallback mechanisms
+- Real-time performance scoring algorithms
+- Visual data representation with AI insights
+- PDF export with AI-generated reports
+
+SYSTEM INTERACTIONS:
+
+Manager → AnalyticsService → OpenRouterAPI → AIAnalyticsProcessor
+Database → DataAggregator → AIPromptBuilder → AIResponseParser
+
+DATABASE RELATIONSHIPS:
+- users (employee data)
+- tasks (performance metrics)
+- user_skills (skill assessment)
+- leave_requests (work-life balance)
+- overtime_records (commitment metrics)
+
+KEY CLASSES FOR CLASS DIAGRAM:
+- AIAnalyticsService
+- OpenRouterClient
+- PerformanceCalculator
+- AIPromptBuilder
+- ResponseParser
+- VisualizationGenerator
+- PDFExportService
+
+SEQUENCE DIAGRAM FLOW:
+1. Manager selects employee for AI analysis
+2. Data aggregation from multiple tables
+3. Performance metrics calculation
+4. AI prompt construction
+5. OpenRouter API call
+6. Response parsing and validation
+7. Fallback generation if AI fails
+8. Visualization data creation
+9. Report generation and display
+10. Optional PDF export
+
+CRITICAL PATTERNS:
+- Fallback mechanisms for AI failures
+- Structured data parsing with error handling
+- Performance metric calculations
+- Real-time data aggregation
+
+================================================================================
+4. NOTIFICATION SYSTEM
+================================================================================
+
+FEATURE OVERVIEW:
+Multi-channel notification system with targeted messaging, bulk operations,
+and real-time delivery tracking.
+
+UNIQUE DIFFERENTIATORS:
+- Role-based notification targeting
+- Bulk notification with individual tracking
+- Multiple notification types with different behaviors
+- Real-time delivery status
+- Integration with approval workflows
+
+SYSTEM INTERACTIONS:
+
+Manager → NotificationController → NotificationService → Database
+NotificationService → WebSocketService → Real-time Clients
+NotificationService → EmailService → External Email Provider
+
+DATABASE RELATIONSHIPS:
+- notifications table (primary)
+- users table (recipient relationship)
+- notification_types (enumerated types)
+- notification_status (delivery tracking)
+
+KEY CLASSES FOR CLASS DIAGRAM:
+- NotificationManager (React Component)
+- NotificationController
+- NotificationService
+- WebSocketManager
+- EmailService
+- NotificationModel
+- DeliveryTracker
+
+SEQUENCE DIAGRAM FLOW:
+1. Manager creates notification
+2. Recipient selection/validation
+3. Notification creation in database
+4. Bulk notification processing
+5. Real-time WebSocket delivery
+6. Email notification (if configured)
+7. Delivery status tracking
+8. Read receipt handling
+
+================================================================================
+5. APPROVAL WORKFLOW SYSTEM
+================================================================================
+
+FEATURE OVERVIEW:
+Centralized approval system for leave requests, overtime requests,
+and mentorship applications with audit trails and automated notifications.
+
+UNIQUE DIFFERENTIATORS:
+- Multi-level approval hierarchy
+- Automated notification triggers
+- Complete audit trail
+- Role-based approval permissions
+- Integration with calendar systems
+
+SYSTEM INTERACTIONS:
+
+Employee → RequestController → ApprovalWorkflow → Manager Dashboard
+ApprovalWorkflow → NotificationService → StatusUpdater → Database
+
+DATABASE RELATIONSHIPS:
+- requests table (primary)
+- request_types (leave, overtime, mentorship)
+- approval_history (audit trail)
+- users (requester and approver)
+
+KEY CLASSES FOR CLASS DIAGRAM:
+- ApprovalManager (React Component)
+- RequestController
+- ApprovalWorkflow
+- RequestModel
+- ApprovalHistory
+- StatusManager
+- CalendarIntegration
+
+SEQUENCE DIAGRAM FLOW:
+1. Manager views pending requests
+2. Request details retrieval
+3. Approval/rejection decision
+4. Database status update
+5. Audit log creation
+6. Automatic notification to requester
+7. Calendar integration (if applicable)
+8. Real-time UI update
+
+================================================================================
+6. TRENDS ANALYSIS SYSTEM
+================================================================================
+
+FEATURE OVERVIEW:
+Industry trends analysis using Google Trends API with AI-powered insights
+and strategic recommendations for business growth.
+
+UNIQUE DIFFERENTIATORS:
+- Industry-specific trend analysis (garment manufacturing)
+- AI-generated strategic recommendations
+- Future trend predictions (12-24 months)
+- Integration of multiple data sources
+- Actionable business insights
+
+SYSTEM INTERACTIONS:
+
+Manager → TrendsController → GoogleTrendsAPI → AIAnalysisService
+TrendsData → AIPromptBuilder → OpenRouterAPI → RecommendationEngine
+
+DATABASE RELATIONSHIPS:
+- trends_cache (API response caching)
+- trend_analysis (AI insights storage)
+- business_recommendations (strategic advice)
+
+KEY CLASSES FOR CLASS DIAGRAM:
+- TrendsAnalyzer (React Component)
+- TrendsController
+- GoogleTrendsClient
+- AIRecommendationEngine
+- TrendsCacheManager
+- BusinessInsightGenerator
+
+SEQUENCE DIAGRAM FLOW:
+1. Manager accesses trends page
+2. Cache validation check
+3. Google Trends API calls (parallel)
+4. Data aggregation and processing
+5. AI analysis prompt generation
+6. OpenRouter API calls for insights
+7. Recommendation generation
+8. Data visualization preparation
+9. Real-time chart updates
+
+================================================================================
+ARCHITECTURAL PATTERNS FOR DIAGRAMS
+================================================================================
+
+CLASS DIAGRAM STRUCTURE:
+1. Presentation Layer (React Components)
+2. Service Layer (Business Logic)
+3. Controller Layer (API Endpoints)
+4. Data Access Layer (Models/Repositories)
+5. External Services (AI APIs, Google APIs)
+6. Utility Services (QR, PDF, Email)
+
+SEQUENCE DIAGRAM PATTERNS:
+1. Authentication Flow (every operation)
+2. Data Validation (client + server)
+3. Database Transactions
+4. Real-time Updates (WebSocket)
+5. Error Handling and Rollback
+6. External API Integration
+7. Notification Triggers
+8. Audit Logging
+
+KEY DESIGN PATTERNS:
+- Repository Pattern (Data Access)
+- Observer Pattern (Real-time Updates)
+- Strategy Pattern (AI Fallbacks)
+- Factory Pattern (Notification Types)
+- Decorator Pattern (Authorization)
+- Command Pattern (Approval Workflows)
+
+CRITICAL SYSTEM BOUNDARIES:
+- Frontend/Backend API Boundary
+- Database Transaction Boundaries
+- External API Integration Points
+- Real-time Communication Channels
+- Security/Authorization Layers
+
+================================================================================
+7. QR CODE CREDENTIAL SYSTEM
+================================================================================
+
+FEATURE OVERVIEW:
+Automated QR code generation for new user credentials with secure
+temporary password distribution and mobile app integration.
+
+UNIQUE DIFFERENTIATORS:
+- Instant credential sharing via QR codes
+- Secure temporary password generation
+- Mobile app integration for QR scanning
+- Automatic credential expiry mechanisms
+- Visual credential distribution
+
+SYSTEM INTERACTIONS:
+
+UserCreation → CredentialGenerator → QRCodeService → DisplayModal
+QRCode → MobileApp → AuthenticationService → PasswordReset
+
+DATABASE RELATIONSHIPS:
+- users table (credential storage)
+- temporary_credentials (QR code data)
+- credential_history (audit trail)
+
+KEY CLASSES FOR CLASS DIAGRAM:
+- QRCodeGenerator
+- CredentialManager
+- TemporaryPasswordService
+- QRDisplayModal
+- MobileAuthIntegration
+
+SEQUENCE DIAGRAM FLOW:
+1. User creation completion
+2. Temporary credential generation
+3. QR code data preparation
+4. QR code image generation
+5. Modal display with QR code
+6. Mobile app scanning
+7. Credential validation
+8. First-time login flow
+
+================================================================================
+8. REAL-TIME DASHBOARD UPDATES
+================================================================================
+
+FEATURE OVERVIEW:
+WebSocket-based real-time updates for dashboard metrics, notifications,
+and system status with optimistic UI updates.
+
+UNIQUE DIFFERENTIATORS:
+- Real-time metric updates without refresh
+- Optimistic UI updates with rollback
+- WebSocket connection management
+- Selective data synchronization
+- Conflict resolution mechanisms
+
+SYSTEM INTERACTIONS:
+
+DatabaseChange → WebSocketServer → ConnectedClients → UIUpdate
+UserAction → OptimisticUpdate → ServerValidation → Confirmation/Rollback
+
+DATABASE RELATIONSHIPS:
+- All tables (change detection)
+- websocket_connections (active sessions)
+- update_queue (pending changes)
+
+KEY CLASSES FOR CLASS DIAGRAM:
+- WebSocketManager
+- RealTimeUpdater
+- OptimisticUIManager
+- ChangeDetector
+- ConflictResolver
+
+SEQUENCE DIAGRAM FLOW:
+1. Data change detection
+2. WebSocket message preparation
+3. Broadcast to connected clients
+4. Client-side state update
+5. UI re-rendering
+6. Acknowledgment handling
+
+================================================================================
+9. EXPORT AND REPORTING SYSTEM
+================================================================================
+
+FEATURE OVERVIEW:
+Comprehensive PDF export system with dashboard screenshots,
+performance charts, and AI-generated reports.
+
+UNIQUE DIFFERENTIATORS:
+- Dashboard screenshot capture
+- AI-integrated report generation
+- Multi-format export options
+- Automated report scheduling
+- Custom report templates
+
+SYSTEM INTERACTIONS:
+
+Manager → ExportService → ChartRenderer → PDFGenerator
+AIReport → TemplateEngine → PDFBuilder → FileDownload
+
+DATABASE RELATIONSHIPS:
+- export_history (tracking)
+- report_templates (customization)
+- scheduled_reports (automation)
+
+KEY CLASSES FOR CLASS DIAGRAM:
+- ExportManager
+- PDFGenerator
+- ChartRenderer
+- TemplateEngine
+- ScheduledReportService
+
+SEQUENCE DIAGRAM FLOW:
+1. Export request initiation
+2. Data aggregation
+3. Chart/visualization rendering
+4. PDF document creation
+5. AI content integration
+6. File generation and download
+
+================================================================================
+10. CHATBOT INTEGRATION SYSTEM
+================================================================================
+
+FEATURE OVERVIEW:
+AI-powered chatbot using DeepSeek-V3 model with context-aware responses,
+markdown formatting, and industry-specific knowledge.
+
+UNIQUE DIFFERENTIATORS:
+- Industry-specific AI training
+- Context-aware conversation management
+- Markdown response formatting
+- Integration with dashboard data
+- Persistent conversation history
+
+SYSTEM INTERACTIONS:
+
+User → ChatbotInterface → OpenRouterAPI → ResponseFormatter
+ChatHistory → ContextManager → AIPromptBuilder → ResponseGenerator
+
+DATABASE RELATIONSHIPS:
+- chat_sessions (conversation tracking)
+- chat_messages (message history)
+- user_context (personalization)
+
+KEY CLASSES FOR CLASS DIAGRAM:
+- ChatbotManager
+- ConversationEngine
+- ContextManager
+- MessageFormatter
+- ResponseProcessor
+
+SEQUENCE DIAGRAM FLOW:
+1. User message input
+2. Context retrieval
+3. AI prompt construction
+4. OpenRouter API call
+5. Response processing
+6. Markdown formatting
+7. Message display
+8. Context update
+
+================================================================================
+DETAILED DATABASE SCHEMA RELATIONSHIPS
+================================================================================
+
+PRIMARY ENTITIES:
+- users (id, email, full_name, role, status, department_id, supervisor_id)
+- departments (id, name, description, headcount, created_at)
+- tasks (id, user_id, title, status, due_date, completion_date)
+- notifications (id, user_id, title, message, type, is_read)
+- requests (id, user_id, type, status, start_date, end_date)
+
+JUNCTION TABLES:
+- user_skills (user_id, skill_id, proficiency_level)
+- user_departments (user_id, department_id, role_in_department)
+- notification_recipients (notification_id, user_id, delivery_status)
+
+AUDIT TABLES:
+- user_audit_log (action, user_id, changed_by, timestamp, changes)
+- department_audit_log (action, department_id, changed_by, timestamp)
+- approval_history (request_id, approver_id, action, timestamp, comments)
+
+CACHE TABLES:
+- trends_cache (api_endpoint, response_data, cache_expiry)
+- analytics_cache (user_id, metric_type, calculated_value, cache_time)
+
+================================================================================
+SECURITY AND AUTHORIZATION PATTERNS
+================================================================================
+
+AUTHENTICATION FLOW:
+1. Google OAuth verification
+2. Supabase user validation
+3. JWT token generation
+4. Role-based route protection
+5. API endpoint authorization
+
+AUTHORIZATION LAYERS:
+- Route-level protection (React Router)
+- Component-level access control
+- API endpoint middleware
+- Database row-level security
+- Feature-level permissions
+
+SECURITY CLASSES:
+- AuthMiddleware
+- RoleValidator
+- PermissionChecker
+- TokenManager
+- SecurityAuditor
+
+================================================================================
+PERFORMANCE OPTIMIZATION PATTERNS
+================================================================================
+
+CACHING STRATEGIES:
+- API response caching (trends data)
+- Computed metrics caching
+- User session caching
+- Database query result caching
+
+OPTIMIZATION TECHNIQUES:
+- Lazy loading for large datasets
+- Pagination for user lists
+- Debounced search inputs
+- Optimistic UI updates
+- Background data synchronization
+
+PERFORMANCE CLASSES:
+- CacheManager
+- DataPaginator
+- OptimisticUpdater
+- BackgroundSyncer
+- PerformanceMonitor
+
+================================================================================
+ERROR HANDLING AND RESILIENCE PATTERNS
+================================================================================
+
+ERROR HANDLING STRATEGIES:
+- Graceful API failure handling
+- AI service fallback mechanisms
+- Database transaction rollbacks
+- User-friendly error messages
+- Automatic retry mechanisms
+
+RESILIENCE PATTERNS:
+- Circuit breaker for external APIs
+- Exponential backoff for retries
+- Fallback data for AI services
+- Offline capability planning
+- Data consistency validation
+
+ERROR HANDLING CLASSES:
+- ErrorHandler
+- FallbackManager
+- RetryService
+- ConsistencyValidator
+- OfflineManager
+
+================================================================================
+RECOMMENDED DIAGRAM STRUCTURES
+================================================================================
+
+CLASS DIAGRAM LAYERS:
+1. UI Components Layer
+2. Service/Business Logic Layer
+3. API Controller Layer
+4. Data Access Layer
+5. External Integration Layer
+6. Utility/Helper Layer
+
+SEQUENCE DIAGRAM CATEGORIES:
+1. User Management Workflows
+2. Analytics and Reporting Flows
+3. Real-time Update Sequences
+4. AI Integration Processes
+5. Approval Workflow Sequences
+6. Error Handling Scenarios
+
+COMPONENT DIAGRAM FOCUS:
+- Microservice boundaries
+- Database connections
+- External API integrations
+- Real-time communication channels
+- Security checkpoints
+
+This technical overview provides the foundation for creating comprehensive
+UML diagrams that accurately represent the system architecture and
+interactions within the Manager Dashboard application.

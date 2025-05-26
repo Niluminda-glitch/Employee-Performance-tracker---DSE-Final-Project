@@ -1,0 +1,756 @@
+paths:
+  # Authentication Endpoints
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "john.doe@example.com"
+              password: "password123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                user:
+                  id: "123e4567-e89b-12d3-a456-426614174000"
+                  email: "john.doe@example.com"
+                  full_name: "John Doe"
+                  role: "employee"
+                  status: "active"
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Invalid credentials"
+        '403':
+          description: Account inactive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: "Account is inactive"
+
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: User registration
+      description: Register a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              email: "jane.doe@example.com"
+              password: "password123"
+              full_name: "Jane Doe"
+              role: "employee"
+              job_title: "Software Developer"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Validation error or user already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/google:
+    get:
+      tags:
+        - Authentication
+      summary: Google OAuth login
+      description: Initiate Google OAuth authentication flow
+      responses:
+        '302':
+          description: Redirect to Google OAuth consent screen
+
+  /api/auth/google/callback:
+    get:
+      tags:
+        - Authentication
+      summary: Google OAuth callback
+      description: Handle Google OAuth callback and create user session
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Authorization code from Google
+      responses:
+        '302':
+          description: Redirect to frontend with authentication token
+
+  # User Management Endpoints
+  /api/users:
+    get:
+      tags:
+        - Users
+      summary: Get all users
+      description: Retrieve list of all users (Supervisor/Manager only)
+      security:
+        - authToken: []
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '403':
+          description: Access denied - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      description: Retrieve specific user information
+      security:
+        - authToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User ID
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Users
+      summary: Update user profile
+      description: Update user information (own profile or admin)
+      security:
+        - authToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                job_title:
+                  type: string
+                avatar_url:
+                  type: string
+                department_id:
+                  type: string
+                  format: uuid
+            example:
+              full_name: "John Smith"
+              job_title: "Senior Developer"
+              avatar_url: "https://example.com/avatar.jpg"
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/profile:
+    get:
+      tags:
+        - Users
+      summary: Get current user profile
+      description: Retrieve authenticated user's profile information
+      security:
+        - authToken: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized - invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Task Management Endpoints
+  /api/tasks:
+    get:
+      tags:
+        - Tasks
+      summary: Get all tasks
+      description: Retrieve all tasks (role-based filtering applied)
+      security:
+        - authToken: []
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+
+    post:
+      tags:
+        - Tasks
+      summary: Create new task
+      description: Create a new task (Supervisor/Manager only)
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+            example:
+              title: "Complete project documentation"
+              description: "Write comprehensive documentation for the new feature"
+              assignee_id: "123e4567-e89b-12d3-a456-426614174000"
+              priority: "high"
+              due_date: "2024-02-15T10:00:00Z"
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/tasks/my:
+    get:
+      tags:
+        - Tasks
+      summary: Get my tasks
+      description: Retrieve tasks assigned to the current user
+      security:
+        - authToken: []
+      responses:
+        '200':
+          description: List of user's tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+
+  /api/tasks/my/upcoming:
+    get:
+      tags:
+        - Tasks
+      summary: Get upcoming task deadlines
+      description: Retrieve tasks with upcoming deadlines for the current user
+      security:
+        - authToken: []
+      responses:
+        '200':
+          description: List of upcoming tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: Number of upcoming deadlines
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+
+  /api/tasks/team:
+    get:
+      tags:
+        - Tasks
+      summary: Get team tasks
+      description: Retrieve tasks for supervisor's team (Supervisor/Manager only)
+      security:
+        - authToken: []
+      responses:
+        '200':
+          description: List of team tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '403':
+          description: Access denied - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/tasks/{id}:
+    get:
+      tags:
+        - Tasks
+      summary: Get task by ID
+      description: Retrieve specific task information
+      security:
+        - authToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Task ID
+      responses:
+        '200':
+          description: Task information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Tasks
+      summary: Update task
+      description: Update task information
+      security:
+        - authToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Task ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: ['pending', 'in-progress', 'completed']
+                priority:
+                  type: string
+                  enum: ['low', 'medium', 'high']
+                due_date:
+                  type: string
+                  format: date-time
+            example:
+              title: "Updated task title"
+              status: "in-progress"
+              priority: "high"
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Tasks
+      summary: Delete task
+      description: Delete a task (Supervisor/Manager only)
+      security:
+        - authToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Task ID
+      responses:
+        '200':
+          description: Task deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Department Management Endpoints
+  /api/departments:
+    get:
+      tags:
+        - Departments
+      summary: Get all departments
+      description: Retrieve list of all departments
+      security:
+        - authToken: []
+      responses:
+        '200':
+          description: List of departments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Department'
+
+  # Skills Management Endpoints
+  /api/skills:
+    get:
+      tags:
+        - Skills
+      summary: Get all skills
+      description: Retrieve list of all available skills
+      security:
+        - authToken: []
+      responses:
+        '200':
+          description: List of skills
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    description:
+                      type: string
+
+  # Notifications
+  /api/notifications:
+    get:
+      tags:
+        - Notifications
+      summary: Get user notifications
+      description: Retrieve all notifications for the current user
+      security:
+        - authToken: []
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    title:
+                      type: string
+                    message:
+                      type: string
+                    type:
+                      type: string
+                      enum: ['system', 'task_assigned', 'task_completed', 'deadline_reminder', 'mentorship_request', 'request_approved', 'request_rejected', 'announcement']
+                    is_read:
+                      type: boolean
+
+  /api/notifications/unread:
+    get:
+      tags:
+        - Notifications
+      summary: Get unread notifications count
+      description: Get count of unread notifications for current user
+      security:
+        - authToken: []
+      responses:
+        '200':
+          description: Unread notifications count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+
+  # Request Management (Leave/Overtime)
+  /api/requests/my:
+    get:
+      tags:
+        - Requests
+      summary: Get my requests
+      description: Get all requests submitted by the current user
+      security:
+        - authToken: []
+      responses:
+        '200':
+          description: List of user's requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum: ['leave', 'overtime']
+                    start_date:
+                      type: string
+                      format: date
+                    end_date:
+                      type: string
+                      format: date
+                    reason:
+                      type: string
+                    status:
+                      type: string
+                      enum: ['pending', 'approved', 'rejected']
+
+  /api/requests:
+    post:
+      tags:
+        - Requests
+      summary: Create new request
+      description: Create a new leave or overtime request
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: ['leave', 'overtime']
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                hours:
+                  type: integer
+                  description: Required for overtime requests
+                reason:
+                  type: string
+              required:
+                - type
+                - start_date
+                - end_date
+                - reason
+      responses:
+        '201':
+          description: Request created successfully
+
+  # Analytics Endpoints
+  /api/analytics/performance:
+    post:
+      tags:
+        - Analytics
+      summary: Analyze employee performance
+      description: Generate AI-powered performance analysis for an employee
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employeeId:
+                  type: string
+                  format: uuid
+                  description: Employee ID to analyze
+                timeframe:
+                  type: string
+                  enum: ['week', 'month', 'quarter', 'year']
+                  default: 'month'
+              required:
+                - employeeId
+      responses:
+        '200':
+          description: Performance analysis generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  analysis:
+                    type: string
+                    description: AI-generated performance analysis
+                  metrics:
+                    type: object
+                    description: Performance metrics and data
+
+  # Trends API Endpoints (Port 3001)
+  /api/trends/industry:
+    get:
+      tags:
+        - Trends
+      summary: Get industry trends
+      description: Retrieve current industry trends data
+      responses:
+        '200':
+          description: Industry trends data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trends:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        topic:
+                          type: string
+                        score:
+                          type: number
+                        growth:
+                          type: string
+
+  /api/trends/styles:
+    get:
+      tags:
+        - Trends
+      summary: Get style trends
+      description: Retrieve current fashion style trends
+      responses:
+        '200':
+          description: Style trends data
+
+  /api/trends/skills:
+    get:
+      tags:
+        - Trends
+      summary: Get skill trends
+      description: Retrieve trending skills in the industry
+      responses:
+        '200':
+          description: Skill trends data
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check if the API server is running
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  message:
+                    type: string
+                    example: "EmpTrack API is running"

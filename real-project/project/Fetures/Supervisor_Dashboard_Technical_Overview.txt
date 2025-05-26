@@ -1,0 +1,656 @@
+🎯 SUPERVISOR DASHBOARD - TECHNICAL FEATURE OVERVIEW
+================================================================
+
+📋 TABLE OF CONTENTS
+1. Team Management System
+2. Task Assignment & Tracking System
+3. Request Approval Workflow
+4. Notification Broadcasting System
+5. Performance Analytics Integration
+6. Employee Profile Management
+7. Real-time Data Synchronization
+8. Authentication & Authorization Framework
+
+================================================================
+
+🏗️ 1. TEAM MANAGEMENT SYSTEM
+================================================================
+
+FEATURE OVERVIEW:
+- Hierarchical team structure management with supervisor-employee relationships
+- Real-time team member status tracking and profile management
+- Dynamic team composition with role-based access control
+
+UNIQUE DIFFERENTIATORS:
+- Supervisor-specific team filtering (only direct reports, not all employees)
+- Real-time status updates with optimistic UI updates
+- Integrated skill tracking and performance correlation
+- Department-based team organization with cross-functional visibility
+
+SYSTEM INTERACTIONS:
+
+DATABASE SCHEMA:
+- users table: id, full_name, email, role, supervisor_id, status, department_id
+- departments table: id, name, supervisor_id
+- user_skills table: user_id, skill_name, proficiency_level
+- supervisor_teams table: supervisor_id, employee_id, assigned_date
+
+API ENDPOINTS:
+- GET /supervisor/team - Fetch direct reports
+- PUT /users/{id}/status - Update employee status
+- GET /users/{id}/profile - Get detailed employee profile
+
+CLASS DIAGRAM HINTS:
+Classes: SupervisorDashboard, TeamManager, Employee, Department, UserProfile
+Relationships:
+- SupervisorDashboard aggregates TeamManager
+- TeamManager manages multiple Employee objects
+- Employee belongs to Department
+- Employee has UserProfile
+
+SEQUENCE DIAGRAM HINTS:
+1. Supervisor → TeamManager → Database → Employee data retrieval
+2. Status Update: Supervisor → UI → API → Database → Real-time notification
+3. Profile View: Supervisor → EmployeeProfileCard → API → Skills/Performance data
+
+================================================================
+
+🎯 2. TASK ASSIGNMENT & TRACKING SYSTEM
+================================================================
+
+FEATURE OVERVIEW:
+- Comprehensive task lifecycle management from creation to completion
+- Priority-based task assignment with due date tracking
+- Real-time status updates with progress monitoring
+
+UNIQUE DIFFERENTIATORS:
+- Zod schema validation for robust data integrity
+- Optimistic UI updates for immediate feedback
+- Integrated team member selection with role validation
+- Priority-based task filtering and sorting
+- Due date alerts with overdue task highlighting
+
+SYSTEM INTERACTIONS:
+
+DATABASE SCHEMA:
+- tasks table: id, title, description, assignee_id, creator_id, priority, status, due_date, created_at
+- task_status_history table: task_id, old_status, new_status, changed_by, changed_at
+- task_comments table: task_id, user_id, comment, created_at
+
+API ENDPOINTS:
+- POST /tasks - Create new task
+- GET /tasks/team - Fetch team tasks
+- PUT /tasks/{id}/status - Update task status
+- GET /tasks/{id}/history - Get task history
+
+FORM VALIDATION:
+- React Hook Form with Zod resolver
+- Real-time validation feedback
+- Custom error handling and display
+
+CLASS DIAGRAM HINTS:
+Classes: TaskManager, Task, TaskForm, TaskValidator, TeamMember
+Relationships:
+- TaskManager creates and manages Task objects
+- TaskForm uses TaskValidator for validation
+- Task is assigned to TeamMember
+- TaskManager aggregates multiple Task objects
+
+SEQUENCE DIAGRAM HINTS:
+1. Task Creation: Supervisor → TaskForm → Validation → API → Database → Notification
+2. Status Update: Supervisor → TaskCard → API → Database → UI Update → Team Notification
+3. Task Assignment: Supervisor → TeamMemberSelector → TaskForm → API → Employee Notification
+
+================================================================
+
+🔄 3. REQUEST APPROVAL WORKFLOW
+================================================================
+
+FEATURE OVERVIEW:
+- Multi-type request handling (leave, overtime, general requests)
+- Approval workflow with comment system
+- Status tracking and history maintenance
+
+UNIQUE DIFFERENTIATORS:
+- Role-based request visibility (supervisors see only team requests)
+- Bulk approval capabilities for efficiency
+- Integrated comment system for approval reasoning
+- Real-time status updates to requesters
+- Request type filtering and categorization
+
+SYSTEM INTERACTIONS:
+
+DATABASE SCHEMA:
+- requests table: id, user_id, type, start_date, end_date, reason, status, created_at
+- request_approvals table: request_id, approver_id, status, comments, approved_at
+- overtime_requests table: request_id, hours_requested, justification
+- leave_requests table: request_id, leave_type, emergency_contact
+
+API ENDPOINTS:
+- GET /requests/team - Fetch team requests for supervisor
+- PUT /requests/{id}/approve - Approve request
+- PUT /requests/{id}/reject - Reject request with comments
+- GET /requests/{id}/history - Get approval history
+
+WORKFLOW STATES:
+pending → approved/rejected → completed (for leave) / processed (for overtime)
+
+CLASS DIAGRAM HINTS:
+Classes: RequestManager, Request, LeaveRequest, OvertimeRequest, ApprovalWorkflow
+Relationships:
+- RequestManager handles multiple Request types
+- LeaveRequest and OvertimeRequest extend Request
+- ApprovalWorkflow manages request state transitions
+- Request has relationship with User (requester) and User (approver)
+
+SEQUENCE DIAGRAM HINTS:
+1. Request Approval: Supervisor → RequestCard → ApprovalDialog → API → Database → Employee Notification
+2. Bulk Approval: Supervisor → RequestList → BulkActions → API → Multiple Database Updates
+3. Request History: Supervisor → RequestDetails → API → ApprovalHistory → Display
+
+================================================================
+
+📢 4. NOTIFICATION BROADCASTING SYSTEM
+================================================================
+
+FEATURE OVERVIEW:
+- Multi-channel notification system with targeted delivery
+- Rich notification creation with multiple recipient types
+- Real-time notification delivery and status tracking
+
+UNIQUE DIFFERENTIATORS:
+- Granular recipient targeting (system-wide, department, individual)
+- Rich text notification content with formatting
+- Delivery confirmation and read receipts
+- Notification scheduling and priority levels
+- Integration with email and in-app notifications
+
+SYSTEM INTERACTIONS:
+
+DATABASE SCHEMA:
+- notifications table: id, title, message, type, creator_id, created_at
+- notification_recipients table: notification_id, user_id, read_at, delivered_at
+- notification_channels table: id, name, type (email, in-app, sms)
+- user_notification_preferences table: user_id, channel_id, enabled
+
+API ENDPOINTS:
+- POST /notifications - Create notification
+- GET /notifications/sent - Get sent notifications
+- PUT /notifications/{id}/recipients - Update recipients
+- GET /users/departments - Get department list for targeting
+
+NOTIFICATION TYPES:
+- system: All users
+- department: Department-specific
+- specific: Individual users
+- bulk: Multiple selected users
+
+CLASS DIAGRAM HINTS:
+Classes: NotificationManager, Notification, Recipient, NotificationChannel, Department
+Relationships:
+- NotificationManager creates Notification
+- Notification has multiple Recipient objects
+- Recipient links to User
+- NotificationChannel handles delivery methods
+
+SEQUENCE DIAGRAM HINTS:
+1. Notification Creation: Supervisor → CreateNotificationModal → RecipientSelector → API → Database → DeliveryService
+2. Bulk Notification: Supervisor → RecipientList → NotificationManager → Multiple User Notifications
+3. Delivery Tracking: NotificationManager → DeliveryService → Database → Status Updates
+
+================================================================
+
+📊 5. PERFORMANCE ANALYTICS INTEGRATION
+================================================================
+
+FEATURE OVERVIEW:
+- Comprehensive team performance tracking and analysis
+- AI-powered insights and recommendations
+- Visual data representation with interactive charts
+
+UNIQUE DIFFERENTIATORS:
+- OpenRouter AI integration for advanced analytics
+- Real-time performance calculation algorithms
+- Comparative team analysis with benchmarking
+- Predictive performance modeling
+- Automated report generation with PDF export
+
+SYSTEM INTERACTIONS:
+
+DATABASE SCHEMA:
+- performance_metrics table: user_id, metric_type, value, period, calculated_at
+- team_analytics table: supervisor_id, team_size, avg_completion_rate, period
+- ai_insights table: id, user_id, insight_type, content, generated_at
+- performance_reports table: id, supervisor_id, report_data, generated_at
+
+API ENDPOINTS:
+- GET /analytics/team/{supervisorId}/stats - Team performance data
+- POST /analytics/generate-insights - AI-powered analysis
+- GET /analytics/employee/{id}/performance - Individual metrics
+- POST /analytics/export-report - Generate PDF report
+
+AI INTEGRATION:
+- OpenRouter API with DeepSeek model
+- Structured prompt engineering for performance analysis
+- Real-time insight generation
+- Performance prediction algorithms
+
+CLASS DIAGRAM HINTS:
+Classes: AnalyticsManager, PerformanceCalculator, AIInsightGenerator, ReportGenerator, ChartRenderer
+Relationships:
+- AnalyticsManager coordinates all analytics operations
+- PerformanceCalculator computes metrics from raw data
+- AIInsightGenerator interfaces with OpenRouter API
+- ReportGenerator creates exportable reports
+
+SEQUENCE DIAGRAM HINTS:
+1. Performance Analysis: Supervisor → AnalyticsPage → PerformanceCalculator → Database → Chart Display
+2. AI Insights: Supervisor → AIAnalytics → OpenRouter API → Insight Processing → Display
+3. Report Generation: Supervisor → ReportGenerator → Data Aggregation → PDF Creation → Download
+
+================================================================
+
+👤 6. EMPLOYEE PROFILE MANAGEMENT
+================================================================
+
+FEATURE OVERVIEW:
+- Comprehensive employee profile viewing and management
+- Skills tracking with proficiency levels
+- Performance history and achievement tracking
+
+UNIQUE DIFFERENTIATORS:
+- Dynamic skill assessment integration
+- Performance correlation with profile data
+- Real-time profile updates with change tracking
+- Integrated task history and performance metrics
+- Avatar management with fallback systems
+
+SYSTEM INTERACTIONS:
+
+DATABASE SCHEMA:
+- user_profiles table: user_id, bio, avatar_url, phone, address, emergency_contact
+- user_skills table: user_id, skill_name, proficiency_level, verified_by, updated_at
+- skill_assessments table: user_id, skill_name, score, assessed_by, assessed_at
+- profile_changes table: user_id, field_changed, old_value, new_value, changed_at
+
+API ENDPOINTS:
+- GET /users/{id}/profile - Complete profile data
+- GET /users/{id}/skills - Skills and proficiency
+- PUT /users/{id}/profile - Update profile information
+- GET /users/{id}/performance-history - Historical performance data
+
+PROFILE COMPONENTS:
+- Basic Information (name, email, role, department)
+- Contact Details (phone, address, emergency contact)
+- Skills and Certifications
+- Performance Metrics
+- Task History and Achievements
+
+CLASS DIAGRAM HINTS:
+Classes: EmployeeProfile, ProfileManager, Skill, PerformanceHistory, ContactInfo
+Relationships:
+- EmployeeProfile aggregates multiple Skill objects
+- ProfileManager manages EmployeeProfile lifecycle
+- PerformanceHistory tracks historical data
+- ContactInfo stores contact details
+
+SEQUENCE DIAGRAM HINTS:
+1. Profile View: Supervisor → EmployeeProfileCard → API → Profile Data → Skills Data → Display
+2. Profile Update: Supervisor → ProfileEditor → Validation → API → Database → Change Log
+3. Skills Assessment: Supervisor → SkillsView → AssessmentData → Proficiency Display
+
+================================================================
+
+⚡ 7. REAL-TIME DATA SYNCHRONIZATION
+================================================================
+
+FEATURE OVERVIEW:
+- Real-time updates across all dashboard components
+- Optimistic UI updates for immediate feedback
+- Error handling with automatic retry mechanisms
+
+UNIQUE DIFFERENTIATORS:
+- WebSocket integration for live updates
+- Optimistic update patterns for better UX
+- Automatic conflict resolution
+- Real-time collaboration features
+- Live notification delivery
+
+SYSTEM INTERACTIONS:
+
+WEBSOCKET EVENTS:
+- team_member_status_changed
+- task_status_updated
+- new_request_submitted
+- notification_delivered
+- performance_metrics_updated
+
+SYNCHRONIZATION PATTERNS:
+- Optimistic Updates: UI updates immediately, syncs with server
+- Pessimistic Updates: Wait for server confirmation
+- Conflict Resolution: Last-write-wins with user notification
+- Retry Logic: Exponential backoff for failed requests
+
+CLASS DIAGRAM HINTS:
+Classes: SyncManager, WebSocketClient, OptimisticUpdater, ConflictResolver, EventHandler
+Relationships:
+- SyncManager coordinates all synchronization
+- WebSocketClient handles real-time communication
+- OptimisticUpdater manages UI state
+- ConflictResolver handles data conflicts
+
+SEQUENCE DIAGRAM HINTS:
+1. Real-time Update: Database Change → WebSocket → SyncManager → UI Update
+2. Optimistic Update: User Action → UI Update → API Call → Confirmation/Rollback
+3. Conflict Resolution: Concurrent Updates → ConflictDetection → Resolution Strategy → User Notification
+
+================================================================
+
+🔐 8. AUTHENTICATION & AUTHORIZATION FRAMEWORK
+================================================================
+
+FEATURE OVERVIEW:
+- Role-based access control with granular permissions
+- Google OAuth integration with Supabase
+- Session management and security
+
+UNIQUE DIFFERENTIATORS:
+- Hierarchical role system (employee → supervisor → manager)
+- Feature-level permission control
+- Secure API endpoint protection
+- Session timeout and refresh handling
+
+SYSTEM INTERACTIONS:
+
+AUTHENTICATION FLOW:
+1. Google OAuth → Token Exchange → Supabase Auth → Role Assignment
+2. JWT Token → API Middleware → Permission Check → Resource Access
+3. Session Refresh → Token Renewal → Continued Access
+
+AUTHORIZATION LEVELS:
+- supervisor: Can manage direct reports only
+- manager: Can manage all employees
+- employee: Can view own data only
+
+CLASS DIAGRAM HINTS:
+Classes: AuthManager, PermissionChecker, RoleValidator, SessionManager, SecurityMiddleware
+Relationships:
+- AuthManager handles authentication flow
+- PermissionChecker validates access rights
+- RoleValidator ensures proper role assignment
+- SecurityMiddleware protects API endpoints
+
+SEQUENCE DIAGRAM HINTS:
+1. Login: User → Google OAuth → Supabase → Role Assignment → Dashboard Access
+2. API Access: Request → SecurityMiddleware → PermissionCheck → Resource Access
+3. Session Refresh: Token Expiry → RefreshToken → New Session → Continued Access
+
+================================================================
+
+🎨 DIAGRAM CREATION GUIDELINES
+================================================================
+
+CLASS DIAGRAM RECOMMENDATIONS:
+1. Use composition for manager-component relationships
+2. Show inheritance for request types (LeaveRequest extends Request)
+3. Include interfaces for API contracts
+4. Show dependency injection patterns
+5. Highlight singleton patterns for managers
+
+SEQUENCE DIAGRAM RECOMMENDATIONS:
+1. Show async operations with activation boxes
+2. Include error handling flows
+3. Show database transactions
+4. Include real-time notification flows
+5. Show user interaction patterns
+
+ARCHITECTURAL PATTERNS:
+- MVC: Model (Database), View (React Components), Controller (API)
+- Observer: Real-time updates and notifications
+- Strategy: Different request approval strategies
+- Factory: Creating different notification types
+- Singleton: Authentication and session management
+
+================================================================
+
+🔄 9. DATA FLOW ARCHITECTURE
+================================================================
+
+FRONTEND DATA FLOW:
+React Components → Context Providers → API Services → Backend APIs → Database
+
+STATE MANAGEMENT:
+- React Context for global state (Auth, Notifications)
+- Local component state for UI interactions
+- React Hook Form for form state management
+- Optimistic updates for immediate feedback
+
+API LAYER ARCHITECTURE:
+- Axios interceptors for authentication
+- Error handling middleware
+- Request/response transformation
+- Retry logic for failed requests
+
+DATABASE INTERACTION PATTERNS:
+- Repository pattern for data access
+- Transaction management for complex operations
+- Connection pooling for performance
+- Query optimization for large datasets
+
+CLASS DIAGRAM HINTS:
+Classes: DataFlowManager, StateManager, APIService, DatabaseRepository
+Relationships:
+- DataFlowManager orchestrates data movement
+- StateManager handles React Context state
+- APIService abstracts HTTP communications
+- DatabaseRepository encapsulates data access
+
+SEQUENCE DIAGRAM HINTS:
+1. Data Fetch: Component → StateManager → APIService → Database → Response Chain
+2. State Update: User Action → Component → StateManager → Context Update → Re-render
+3. Error Handling: API Error → ErrorHandler → User Notification → Fallback Data
+
+================================================================
+
+🏗️ 10. COMPONENT ARCHITECTURE
+================================================================
+
+COMPONENT HIERARCHY:
+SupervisorDashboard (Main Container)
+├── TopNavigation (Header)
+├── WelcomeSection (Hero)
+├── TabsContainer (Main Content)
+│   ├── TeamTab
+│   │   ├── TeamMembersList
+│   │   ├── EmployeeProfileCard
+│   │   └── TeamManagementCard
+│   ├── TasksTab
+│   │   ├── TasksList
+│   │   ├── TaskForm
+│   │   └── TaskStatusUpdater
+│   ├── RequestsTab
+│   │   ├── RequestsList
+│   │   ├── ApprovalDialog
+│   │   └── RequestFilters
+│   └── PerformanceTab
+│       ├── PerformanceMetrics
+│       ├── AnalyticsCharts
+│       └── AIInsights
+└── ModalsContainer
+    ├── CreateNotificationModal
+    ├── TaskAssignmentModal
+    └── EmployeeProfileModal
+
+COMPONENT COMMUNICATION:
+- Props drilling for simple data
+- Context for global state
+- Custom hooks for shared logic
+- Event callbacks for user actions
+
+CLASS DIAGRAM HINTS:
+Classes: ComponentManager, TabContainer, Modal, FormComponent, ListComponent
+Relationships:
+- ComponentManager manages component lifecycle
+- TabContainer aggregates multiple tab components
+- Modal extends base component with overlay behavior
+- FormComponent implements validation interface
+
+SEQUENCE DIAGRAM HINTS:
+1. Component Mount: Parent → Child → useEffect → Data Fetch → Render
+2. User Interaction: User → Component → Event Handler → State Update → Re-render
+3. Modal Flow: Trigger → Modal Open → Form Submit → API Call → Modal Close
+
+================================================================
+
+🔧 11. ERROR HANDLING & RESILIENCE
+================================================================
+
+ERROR HANDLING STRATEGIES:
+1. API Error Handling:
+   - Network errors with retry logic
+   - Authentication errors with re-login
+   - Validation errors with user feedback
+   - Server errors with fallback data
+
+2. UI Error Boundaries:
+   - Component-level error catching
+   - Graceful degradation
+   - Error reporting to logging service
+   - User-friendly error messages
+
+3. Data Validation:
+   - Frontend validation with Zod
+   - Backend validation with middleware
+   - Real-time validation feedback
+   - Sanitization for security
+
+RESILIENCE PATTERNS:
+- Circuit breaker for API calls
+- Fallback data for offline scenarios
+- Progressive loading for large datasets
+- Graceful degradation for missing features
+
+CLASS DIAGRAM HINTS:
+Classes: ErrorHandler, ValidationManager, CircuitBreaker, FallbackProvider
+Relationships:
+- ErrorHandler implements error boundary pattern
+- ValidationManager coordinates validation strategies
+- CircuitBreaker monitors API health
+- FallbackProvider supplies default data
+
+SEQUENCE DIAGRAM HINTS:
+1. Error Recovery: Error → ErrorHandler → Retry Logic → Success/Fallback
+2. Validation Flow: Input → Validator → Error Display → User Correction
+3. Circuit Breaker: API Call → Health Check → Circuit State → Response/Fallback
+
+================================================================
+
+🎯 12. DIAGRAM CREATION SUMMARY
+================================================================
+
+ESSENTIAL CLASS DIAGRAMS TO CREATE:
+
+1. **AUTHENTICATION & AUTHORIZATION SYSTEM**
+   Classes: AuthManager, User, Role, Permission, SecurityMiddleware
+   Key Relationships:
+   - User has Role (composition)
+   - Role contains Permissions (aggregation)
+   - SecurityMiddleware validates User permissions
+   - AuthManager orchestrates authentication flow
+
+2. **TASK MANAGEMENT SYSTEM**
+   Classes: TaskManager, Task, TaskForm, TaskValidator, TeamMember, TaskStatus
+   Key Relationships:
+   - TaskManager creates and manages Task instances
+   - Task is assigned to TeamMember
+   - TaskForm uses TaskValidator for validation
+   - Task has TaskStatus (state pattern)
+
+3. **REQUEST APPROVAL WORKFLOW**
+   Classes: RequestManager, Request, LeaveRequest, OvertimeRequest, ApprovalWorkflow, Approver
+   Key Relationships:
+   - LeaveRequest and OvertimeRequest extend Request (inheritance)
+   - ApprovalWorkflow manages Request state transitions
+   - Approver processes Request approvals
+   - RequestManager coordinates workflow
+
+4. **NOTIFICATION BROADCASTING SYSTEM**
+   Classes: NotificationManager, Notification, Recipient, NotificationChannel, Department
+   Key Relationships:
+   - NotificationManager creates Notification instances
+   - Notification has multiple Recipients (one-to-many)
+   - NotificationChannel handles delivery methods
+   - Department groups Recipients
+
+5. **TEAM MANAGEMENT SYSTEM**
+   Classes: TeamManager, Employee, Supervisor, Department, EmployeeProfile, Skill
+   Key Relationships:
+   - Supervisor manages multiple Employees (one-to-many)
+   - Employee belongs to Department
+   - Employee has EmployeeProfile (composition)
+   - EmployeeProfile contains Skills (aggregation)
+
+ESSENTIAL SEQUENCE DIAGRAMS TO CREATE:
+
+1. **USER AUTHENTICATION FLOW**
+   Actors: User, Browser, GoogleOAuth, Supabase, Application
+   Flow: Login Request → OAuth Redirect → Token Exchange → Role Assignment → Dashboard Access
+
+2. **TASK ASSIGNMENT PROCESS**
+   Actors: Supervisor, TaskForm, TaskValidator, API, Database, Employee
+   Flow: Task Creation → Validation → API Call → Database Storage → Employee Notification
+
+3. **REQUEST APPROVAL WORKFLOW**
+   Actors: Employee, RequestForm, Supervisor, ApprovalSystem, Database, NotificationService
+   Flow: Request Submission → Supervisor Review → Approval Decision → Status Update → Notification
+
+4. **REAL-TIME NOTIFICATION DELIVERY**
+   Actors: System, WebSocket, NotificationManager, Client, UI
+   Flow: Event Trigger → WebSocket Broadcast → Client Reception → UI Update
+
+5. **PERFORMANCE ANALYTICS GENERATION**
+   Actors: Supervisor, AnalyticsService, Database, AIService, ReportGenerator
+   Flow: Analytics Request → Data Collection → AI Processing → Report Generation → Display
+
+KEY ARCHITECTURAL PATTERNS TO HIGHLIGHT:
+
+**DESIGN PATTERNS:**
+- **MVC Pattern**: Model (Database/API), View (React Components), Controller (Event Handlers)
+- **Observer Pattern**: Real-time updates and notification system
+- **Strategy Pattern**: Different approval strategies and validation methods
+- **Factory Pattern**: Creating different types of requests and notifications
+- **Repository Pattern**: Data access abstraction layer
+- **Middleware Pattern**: Authentication and authorization pipeline
+- **Command Pattern**: User actions with undo/redo capabilities
+- **State Pattern**: Task and request status management
+
+**ARCHITECTURAL PATTERNS:**
+- **Layered Architecture**: Presentation → Business Logic → Data Access
+- **Event-Driven Architecture**: Real-time updates and notifications
+- **Microservices Pattern**: Separate services for different domains
+- **API Gateway Pattern**: Centralized API management
+- **CQRS Pattern**: Separate read and write operations for analytics
+
+**SPECIFIC DIAGRAM RECOMMENDATIONS:**
+
+For Class Diagrams:
+- Use composition diamonds for strong relationships (Employee-Profile)
+- Use aggregation diamonds for weak relationships (Team-Members)
+- Show inheritance triangles for request types
+- Include interface implementations for API contracts
+- Highlight singleton patterns with <<singleton>> stereotype
+
+For Sequence Diagrams:
+- Show activation boxes for method execution time
+- Include alternative flows for error scenarios
+- Use notes for important business rules
+- Show async operations with different arrow styles
+- Include database transaction boundaries
+
+**TOOLS RECOMMENDED:**
+- PlantUML for text-based diagram creation
+- Lucidchart for collaborative diagramming
+- Draw.io for free online diagramming
+- Enterprise Architect for comprehensive modeling
+
+================================================================

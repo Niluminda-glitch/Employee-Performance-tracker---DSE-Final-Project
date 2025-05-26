@@ -1,0 +1,284 @@
+# Database Schema Diagram (ERD) - Drawing Instructions
+## Employee Tracking System - Professional ERD Creation Guide
+
+### 📋 OVERVIEW
+This document provides detailed instructions for creating a professional Entity Relationship Diagram (ERD) for the Employee Tracking System database schema.
+
+### 🎯 DIAGRAM REQUIREMENTS
+- **Tool Recommendations**: Draw.io, Lucidchart, MySQL Workbench, or any professional ERD tool
+- **Format**: Landscape orientation (A3 or A4)
+- **Style**: Professional, clean, and readable
+- **Colors**: Use consistent color scheme (suggested: blue for tables, green for relationships)
+
+### 📊 TABLE SPECIFICATIONS
+
+#### 1. USERS TABLE
+**Position**: Top-left area of diagram
+**Shape**: Rectangle with rounded corners
+**Header**: "USERS" (bold, centered)
+**Fields** (list vertically):
+```
+🔑 id: UUID (PK)
+📧 email: TEXT (UK)
+🔒 password: TEXT
+👤 full_name: TEXT
+🎭 role: ENUM
+📊 status: ENUM
+💼 job_title: TEXT
+🏢 department_id: UUID (FK)
+👨‍💼 supervisor_id: UUID (FK)
+🌐 google_id: TEXT (UK)
+🖼️ avatar_url: TEXT
+⏰ created_at: TIMESTAMPTZ
+🔄 updated_at: TIMESTAMPTZ
+```
+
+#### 2. DEPARTMENTS TABLE
+**Position**: Top-center area
+**Shape**: Rectangle with rounded corners
+**Header**: "DEPARTMENTS" (bold, centered)
+**Fields**:
+```
+🔑 id: UUID (PK)
+📝 name: TEXT
+📄 description: TEXT
+⏰ created_at: TIMESTAMPTZ
+🔄 updated_at: TIMESTAMPTZ
+```
+
+#### 3. TASKS TABLE
+**Position**: Middle-left area
+**Shape**: Rectangle with rounded corners
+**Header**: "TASKS" (bold, centered)
+**Fields**:
+```
+🔑 id: UUID (PK)
+📝 title: TEXT
+📄 description: TEXT
+👤 assignee_id: UUID (FK)
+👨‍💼 supervisor_id: UUID (FK)
+📊 status: ENUM
+⚡ priority: ENUM
+📅 due_date: DATE
+⏰ created_at: TIMESTAMPTZ
+🔄 updated_at: TIMESTAMPTZ
+```
+
+#### 4. SKILLS TABLE
+**Position**: Top-right area
+**Shape**: Rectangle with rounded corners
+**Header**: "SKILLS" (bold, centered)
+**Fields**:
+```
+🔑 id: UUID (PK)
+📝 name: TEXT (UK)
+📄 description: TEXT
+⏰ created_at: TIMESTAMPTZ
+🔄 updated_at: TIMESTAMPTZ
+```
+
+#### 5. USER_SKILLS TABLE (Junction Table)
+**Position**: Center-right area
+**Shape**: Rectangle with rounded corners (smaller than main tables)
+**Header**: "USER_SKILLS" (bold, centered)
+**Fields**:
+```
+🔑 user_id: UUID (PK, FK)
+🔑 skill_id: UUID (PK, FK)
+📊 proficiency_level: ENUM
+🎓 willing_to_mentor: BOOLEAN
+✅ is_certified: BOOLEAN
+📅 last_certified_date: DATE
+📚 is_training: BOOLEAN
+⏰ created_at: TIMESTAMPTZ
+🔄 updated_at: TIMESTAMPTZ
+```
+
+
+
+#### 6. NOTIFICATIONS TABLE
+**Position**: Middle-center area
+**Shape**: Rectangle with rounded corners
+**Header**: "NOTIFICATIONS" (bold, centered)
+**Fields**:
+```
+🔑 id: UUID (PK)
+👤 user_id: UUID (FK)
+📝 title: TEXT
+💬 message: TEXT
+🏷️ type: ENUM
+📋 related_task_id: UUID (FK)
+👥 related_user_id: UUID (FK)
+👁️ is_read: BOOLEAN
+⏰ created_at: TIMESTAMPTZ
+```
+
+#### 7. REQUESTS TABLE
+**Position**: Bottom-left area
+**Shape**: Rectangle with rounded corners
+**Header**: "REQUESTS" (bold, centered)
+**Fields**:
+```
+🔑 id: UUID (PK)
+👤 user_id: UUID (FK)
+🏷️ type: ENUM
+📅 start_date: DATE
+📅 end_date: DATE
+⏰ hours: INTEGER
+📝 reason: TEXT
+📊 status: ENUM
+✅ approver_id: UUID (FK)
+⏰ created_at: TIMESTAMPTZ
+🔄 updated_at: TIMESTAMPTZ
+```
+
+### 🔗 RELATIONSHIP SPECIFICATIONS
+
+#### Primary Relationships (draw with solid lines):
+
+1. **DEPARTMENTS → USERS** (One-to-Many)
+   - From: DEPARTMENTS.id
+   - To: USERS.department_id
+   - Cardinality: 1:N
+   - Label: "has_employees"
+
+2. **USERS → USERS** (Self-Referential)
+   - From: USERS.id
+   - To: USERS.supervisor_id
+   - Cardinality: 1:N
+   - Label: "supervises"
+
+3. **USERS → TASKS** (One-to-Many - Assignee)
+   - From: USERS.id
+   - To: TASKS.assignee_id
+   - Cardinality: 1:N
+   - Label: "assigned_to"
+
+4. **USERS → TASKS** (One-to-Many - Supervisor)
+   - From: USERS.id
+   - To: TASKS.supervisor_id
+   - Cardinality: 1:N
+   - Label: "supervises_tasks"
+
+5. **USERS → USER_SKILLS** (One-to-Many)
+   - From: USERS.id
+   - To: USER_SKILLS.user_id
+   - Cardinality: 1:N
+
+6. **SKILLS → USER_SKILLS** (One-to-Many)
+   - From: SKILLS.id
+   - To: USER_SKILLS.skill_id
+   - Cardinality: 1:N
+
+7. **USERS → NOTIFICATIONS** (One-to-Many - Receiver)
+   - From: USERS.id
+   - To: NOTIFICATIONS.user_id
+   - Cardinality: 1:N
+   - Label: "receives"
+
+8. **USERS → NOTIFICATIONS** (One-to-Many - Related User)
+   - From: USERS.id
+   - To: NOTIFICATIONS.related_user_id
+   - Cardinality: 1:N
+   - Label: "mentioned_in"
+
+9. **TASKS → NOTIFICATIONS** (One-to-Many)
+   - From: TASKS.id
+   - To: NOTIFICATIONS.related_task_id
+   - Cardinality: 1:N
+   - Label: "generates"
+
+10. **USERS → REQUESTS** (One-to-Many - Submitter)
+    - From: USERS.id
+    - To: REQUESTS.user_id
+    - Cardinality: 1:N
+    - Label: "submits"
+
+11. **USERS → REQUESTS** (One-to-Many - Approver)
+    - From: USERS.id
+    - To: REQUESTS.approver_id
+    - Cardinality: 1:N
+    - Label: "approves"
+
+### 🎨 VISUAL FORMATTING GUIDELINES
+
+#### Color Scheme:
+- **Table Headers**: Dark Blue (#2E4A6B)
+- **Primary Keys**: Gold/Yellow (#FFD700)
+- **Foreign Keys**: Orange (#FF8C00)
+- **Regular Fields**: Light Gray (#F5F5F5)
+- **Relationship Lines**: Dark Green (#228B22)
+- **Junction Table**: Light Purple (#DDA0DD)
+
+#### Typography:
+- **Table Names**: Bold, 14pt, ALL CAPS
+- **Field Names**: Regular, 10pt
+- **Data Types**: Italic, 9pt
+- **Constraints**: Bold, 8pt (PK, FK, UK)
+
+#### Line Styles:
+- **Solid Lines**: Primary relationships
+- **Dashed Lines**: Optional relationships
+- **Thick Lines**: Strong relationships (1:N)
+- **Thin Lines**: Weak relationships
+
+#### Symbols:
+- **🔑**: Primary Key
+- **🔗**: Foreign Key
+- **⭐**: Unique Key
+- **📊**: Enum Field
+- **⏰**: Timestamp Field
+
+### 📐 LAYOUT RECOMMENDATIONS
+
+#### Grid Layout (3x3):
+```
+[DEPARTMENTS]    [SKILLS]         [Legend/Notes]
+[USERS]          [USER_SKILLS]    [NOTIFICATIONS]
+[REQUESTS]       [TASKS]          [Empty Space]
+```
+
+#### Spacing:
+- **Between Tables**: 2-3 cm
+- **Table Padding**: 0.5 cm
+- **Field Spacing**: 0.3 cm
+
+### 📝 LEGEND/NOTES SECTION
+**Position**: Bottom-right corner
+**Include**:
+- Symbol explanations
+- Relationship cardinality meanings
+- ENUM value lists
+- Constraint explanations
+
+### ✅ QUALITY CHECKLIST
+- [ ] All 7 tables included
+- [ ] All fields with correct data types
+- [ ] Primary keys clearly marked
+- [ ] Foreign keys clearly marked
+- [ ] All relationships drawn
+- [ ] Cardinality labels added
+- [ ] Professional color scheme applied
+- [ ] Legend included
+- [ ] Readable font sizes
+- [ ] Proper spacing and alignment
+
+### 🔧 ENUM VALUES REFERENCE
+Include these in your legend:
+
+**user_role**: employee, supervisor, manager
+**user_status**: active, inactive, first_login
+**skill_proficiency**: learning, proficient, expert
+**task_status**: pending, in-progress, completed
+**task_priority**: low, medium, high
+**notification_type**: system, task_assigned, task_completed, deadline_reminder, mentorship_request, request_approved, request_rejected, announcement
+**request_type**: leave, overtime
+**request_status**: pending, approved, rejected
+
+### 📋 FINAL NOTES
+- Save in multiple formats (PDF, PNG, SVG)
+- Ensure diagram fits on standard paper sizes
+- Test readability when printed
+- Include creation date and version number
+- Consider creating both detailed and simplified versions
+- Total tables: 7 (Users, Departments, Tasks, Skills, User_Skills, Notifications, Requests)

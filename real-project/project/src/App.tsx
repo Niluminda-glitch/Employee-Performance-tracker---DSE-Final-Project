@@ -18,6 +18,7 @@ import Notifications from "./pages/Notifications";
 import TeamTasks from "./pages/TeamTasks";
 import TeamManagement from "./pages/TeamManagement";
 import Analytics from "./pages/Analytics";
+import AIAnalytics from "./pages/AIAnalytics";
 import TrendsPage from "./pages/TrendsPage";
 import LoadingDemo from "./pages/LoadingDemo";
 import RefreshPage from "./pages/RefreshPage";
@@ -56,6 +57,7 @@ const AppContent = () => {
     '/team-tasks',
     '/team-requests',
     '/analytics',
+    '/ai-analytics',
     '/team-management',
     '/trends',
     '/loading-demo',
@@ -133,6 +135,10 @@ const AppContent = () => {
           <Route
             path="/analytics"
             element={<ProtectedRoute element={<Analytics />} requiredRole={["supervisor", "manager"]} />}
+          />
+          <Route
+            path="/ai-analytics"
+            element={<ProtectedRoute element={<AIAnalytics />} requiredRole={["supervisor", "manager"]} />}
           />
 
           <Route

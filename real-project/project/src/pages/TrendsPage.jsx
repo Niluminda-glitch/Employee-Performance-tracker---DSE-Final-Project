@@ -343,18 +343,18 @@ const fetchAISuggestions = async (industry, styles, skills) => {
     `;
 
     try {
-      // Make the API call to GitHub AI
+      // Make the API call to OpenRouter AI
       const rawText = await generateText(prompt, {
         temperature: 0.7,
         max_tokens: 500,
-        model: "openai/gpt-4.1"
+        model: "tngtech/deepseek-r1t-chimera:free"
       });
 
       // Process the text to ensure it's properly formatted as a list
       const processedText = formatSuggestionsAsList(rawText);
       return processedText;
     } catch (apiError) {
-      console.error("Error calling GitHub AI API, falling back to mock data:", apiError);
+      console.error("Error calling OpenRouter AI API, falling back to mock data:", apiError);
 
       // Simulate network delay for mock data
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -395,18 +395,18 @@ const fetchAIPredictions = async (industry, styles, skills) => {
     `;
 
     try {
-      // Make the API call to GitHub AI
+      // Make the API call to OpenRouter AI
       const rawText = await generateText(prompt, {
         temperature: 0.75, // Slightly higher temperature for more creative predictions
         max_tokens: 600,
-        model: "openai/gpt-4.1"
+        model: "tngtech/deepseek-r1t-chimera:free"
       });
 
       // Process the text to ensure it's properly formatted as a list
       const processedText = formatSuggestionsAsList(rawText);
       return processedText;
     } catch (apiError) {
-      console.error("Error calling GitHub AI API for predictions, falling back to mock data:", apiError);
+      console.error("Error calling OpenRouter AI API for predictions, falling back to mock data:", apiError);
 
       // Simulate network delay for mock data
       await new Promise(resolve => setTimeout(resolve, 1500));
