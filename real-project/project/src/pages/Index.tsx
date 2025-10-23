@@ -934,27 +934,7 @@ const Index = () => {
             </CardContent>
 
             <CardFooter className="text-center text-xs text-muted-foreground flex flex-col space-y-2">
-              <motion.p
-                className="w-full"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.9, duration: 0.5 }}
-              >
-                By signing in, you agree to our Terms of Service and Privacy Policy.
-              </motion.p>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 2.0, duration: 0.5 }}
-              >
-                <a
-                  href="/loading-demo"
-                  className="text-purple-500 hover:text-purple-700 transition-colors text-xs font-medium"
-                >
-                  Check out our loading animations demo
-                </a>
-              </motion.div>
             </CardFooter>
           </Card>
         )}
