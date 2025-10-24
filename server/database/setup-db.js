@@ -1,72 +1,41 @@
-// This script helps set up the PostgreSQL database
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config();
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
 async function setupDatabase() {
-  // Create a client to connect to the default postgres database
   const client = new Client({
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    user: process.env.DB_USER || 'postgres',
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: 'postgres' // Connect to default postgres database first
+    database: process.env.DB_NAME,
+    ssl: {
+      rejectUnauthorized: false
+    }
   });
 
   try {
-    // Connect to the default postgres database
     await client.connect();
-    console.log('Connected to PostgreSQL server');
+    console.log(`✅ Successfully connected to Supabase database: ${process.env.DB_HOST}`);
 
-    // Check if our database exists
-    const dbName = process.env.DB_NAME || 'emptrack_db';
-    const checkDbResult = await client.query(
-      `SELECT 1 FROM pg_database WHERE datname = $1`,
-      [dbName]
-    );
-
-    // Create the database if it doesn't exist
-    if (checkDbResult.rowCount === 0) {
-      console.log(`Database ${dbName} does not exist, creating...`);
-      await client.query(`CREATE DATABASE ${dbName}`);
-      console.log(`Database ${dbName} created successfully`);
-    } else {
-      console.log(`Database ${dbName} already exists`);
-    }
-
-    // Close the connection to the default postgres database
-    await client.end();
-    console.log('Disconnected from default postgres database');
-
-    // Connect to our database
-    const dbClient = new Client({
-      host: process.env.DB_HOST || 'localhost',
-      port: process.env.DB_PORT || 5432,
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD,
-      database: dbName
-    });
-
-    await dbClient.connect();
-    console.log(`Connected to ${dbName} database`);
-
-    // Read and execute the initialization SQL script
     const initSqlPath = path.join(__dirname, 'init.sql');
     const initSql = fs.readFileSync(initSqlPath, 'utf8');
 
-    console.log('Executing initialization SQL script...');
-    await dbClient.query(initSql);
-    console.log('Initialization SQL script executed successfully');
+    console.log('⚙️  Executing init.sql to create tables...');
+    await client.query(initSql);
+    console.log('✅ Tables created successfully from init.sql');
 
-    // Close the connection to our database
-    await dbClient.end();
-    console.log(`Disconnected from ${dbName} database`);
+    console.log('🎉 Database setup completed successfully!');
 
-    console.log('Database setup completed successfully');
   } catch (error) {
-    console.error('Error setting up database:', error);
+    console.error('❌ ERROR during database setup:', error.message);
     process.exit(1);
+  } finally {
+    if (client._connected) {
+      await client.end();
+      console.log('🔌 Connection to database closed.');
+    }
   }
 }
 

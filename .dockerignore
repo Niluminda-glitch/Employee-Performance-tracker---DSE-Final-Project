@@ -1,0 +1,40 @@
+# Ignore the git repository itself
+.git
+
+# Ignore IDE-specific settings folders and files
+.idea/
+.vscode/
+*.code-workspace
+
+# Ignore project metadata, backup, and other non-app folders
+DatabaseBackup/
+SQL/
+MobileApp/
+
+# Ignore all environment files from the build context
+**/.env
+
+# Ignore Node.js dependency folders (these will be installed inside the container)
+node_modules
+*/node_modules
+
+# Ignore log files
+npm-debug.log
+yarn-error.log
+
+# Ignore miscellaneous document and script files found in the project root
+# The '/**/' prefix makes it apply only to the root to avoid ignoring test data, etc.
+/*googleOauth-emptrack.json
+/*folders.txt
+/*GOOGLE_AUTH_TESTING.md
+/*How to start the EmpTrack.docx
+/*kill-servers.ps1
+/*SWAGGER_IMPLEMENTATION_SUMMARY.md
+/*README.md
+
+# Ignore any README files found in subdirectories as well
+*/README.md
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db

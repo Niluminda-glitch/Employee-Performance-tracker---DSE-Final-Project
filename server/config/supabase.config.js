@@ -10,12 +10,12 @@ module.exports = {
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 
   // Direct PostgreSQL connection to Supabase (for Sequelize)
-  DB_HOST: process.env.SUPABASE_DB_HOST || "aws-0-us-west-1.pooler.supabase.com",
-  DB_USER: process.env.SUPABASE_DB_USER || "postgres.sqtwsuvwwynibcuwcjlc",
-  DB_PASSWORD: process.env.SUPABASE_DB_PASSWORD,
-  DB_NAME: process.env.SUPABASE_DB_NAME || "postgres",
-  DB_PORT: process.env.SUPABASE_DB_PORT || 5432,
-  DB_SSL: process.env.SUPABASE_DB_SSL !== 'false', // Default to true
+  DB_HOST: process.env.DB_HOST || "aws-0-us-west-1.pooler.supabase.com",
+  DB_USER: process.env.DB_USER || "postgres.sqtwsuvwwynibcuwcjlc",
+  DB_PASSWORD: process.env.DB_PASSWORD,
+  DB_NAME: process.env.DB_NAME || "postgres",
+  DB_PORT: process.env.DB_PORT || 5432,
+  DB_SSL: process.env.DB_SSL !== 'false', // Default to true
 
   // Connection pool configuration
   pool: {

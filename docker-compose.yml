@@ -1,0 +1,42 @@
+services:
+  # Main Backend Service
+  backend:
+    build:
+      context: .  # Use the root directory as the build context
+      dockerfile: ./server/Dockerfile # Specify the path to the Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./server:/usr/src/app
+      - /usr/src/app/node_modules
+    env_file:
+      - ./server/.env
+    restart: unless-stopped
+
+  # Trends Backend Service
+  trends_backend:
+    build:
+      context: .
+      dockerfile: ./trends-backend/Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./trends-backend:/usr/src/app
+      - /usr/src/app/node_modules
+    env_file:
+      - ./trends-backend/.env
+    restart: unless-stopped
+
+  # Frontend Service
+  frontend:
+    build:
+      context: .
+      dockerfile: ./real-project/project/Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./real-project/project:/usr/src/app
+      - /usr/src/app/node_modules
+    env_file:
+      - ./real-project/project/.env
+    restart: unless-stopped

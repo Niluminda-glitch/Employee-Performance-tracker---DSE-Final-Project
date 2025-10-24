@@ -279,7 +279,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       console.log("[AuthContext] firstTimeSetup: API Success. User:", receivedUser);
-      localStorage.setItem('user', JSON.stringify(receivedUser));
+      const updatedUser = { ...receivedUser, status: 'active' };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
 
       // Clear temporary credentials
       localStorage.removeItem('temp_credentials');
@@ -287,7 +288,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Update token STATE, which triggers the loadUser effect
       setAuthToken(receivedToken);
       setToken(receivedToken);
-      setUser(receivedUser);
+      setUser(updatedUser);
       setIsFirstLogin(false); // User is no longer in first-time login state
 
       toast.success(`Welcome, ${receivedUser.full_name || receivedUser.email}!`);
