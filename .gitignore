@@ -1,0 +1,11 @@
+# Ignore IDE settings
+.idea
+.vscode
+
+# Ignore dependency folders
+node_modules/
+*/node_modules/
+
+# Ignore secrets!
+.env
+*/.env
