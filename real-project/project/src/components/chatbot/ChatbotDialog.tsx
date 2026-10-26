@@ -53,7 +53,7 @@ const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ className }) => {
   };
 
   // Render message bubble
-  const renderMessage = (message: any, index: number) => {
+  const renderMessage = (message: { id: string; role: string; content: string; timestamp: number | string | Date }, index: number) => {
     const isUser = message.role === 'user';
     const isSystem = message.role === 'system';
 

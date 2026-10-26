@@ -82,7 +82,7 @@ const CursorEffect: React.FC<CursorEffectProps> = ({
           width: currentSize * 2,
           height: currentSize * 2,
           backgroundColor: color,
-          mixBlendMode: mixBlendMode as any,
+          mixBlendMode: mixBlendMode as React.CSSProperties['mixBlendMode'],
           opacity: isVisible ? opacity : 0,
           left: mousePosition.x - currentSize,
           top: mousePosition.y - currentSize,

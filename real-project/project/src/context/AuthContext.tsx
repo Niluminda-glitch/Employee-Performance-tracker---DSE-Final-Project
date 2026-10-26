@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import axios from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 import { getDashboardPathForRole } from '@/lib/auth';
 
 // Define user types
@@ -36,7 +36,7 @@ interface AuthContextType {
   isFirstLogin: boolean;
   error: string | null;
   setError: (error: string | null) => void;
-  api: any; // Axios instance with auth token
+  api: AxiosInstance; // Axios instance with auth token
 }
 
 // Create auth context
@@ -151,15 +151,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(res.data); // Update user state
         setIsFirstLogin(res.data.status === 'first_login');
 
-      } catch (err: any) {
-        console.error("[AuthContext] loadUser: Failed.", err.response?.data || err.message);
+      } catch (err: unknown) {
+        const error = err as { response?: { status?: number; data?: { message?: string } }; message?: string };
+        console.error("[AuthContext] loadUser: Failed.", error.response?.data || error.message);
 
         // Check if we're on the auth page already
         const currentPath = window.location.pathname;
         const isAuthPage = currentPath === '/' || currentPath === '/auth' || currentPath === '/auth/callback';
 
         // Only clear token/user if error indicates invalid token (e.g., 401)
-        if (err.response?.status === 401 || err.response?.status === 403) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
           console.log("[AuthContext] loadUser: 401/403 error, clearing token and user");
           setAuthToken(null); // Remove invalid token
           setToken(null);     // Clear token state
@@ -177,7 +178,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
           // For network errors or server errors, we might want to keep the token
           // and let the user retry, but for now let's clear it to be safe
-          if (err.response?.status >= 500 || !err.response) {
+          if ((error.response?.status ?? 0) >= 500 || !error.response) {
             console.log("[AuthContext] loadUser: Server or network error, keeping token for retry");
             // Keep token but set error state
           } else {
@@ -230,12 +231,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       toast.success(`Welcome back, ${receivedUser.full_name || receivedUser.email}!`);
       return true;
 
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.message || err.message || "Login failed.";
+    } catch (err: unknown) {
+      const error = err as { response?: { status?: number; data?: { message?: string } }; message?: string };
+      const errorMsg = error.response?.data?.message || error.message || "Login failed.";
       console.error("[AuthContext] login: API Failed.", errorMsg);
 
       // Special handling for first-time login
-      if (err.response?.status === 403 && err.response?.data?.message === 'Account requires initial setup/password change.') {
+      if (error.response?.status === 403 && error.response?.data?.message === 'Account requires initial setup/password change.') {
         console.log("[AuthContext] login: First-time login detected");
         // Store the credentials temporarily for the first-time login form
         localStorage.setItem('temp_credentials', JSON.stringify({
@@ -293,8 +295,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       toast.success(`Welcome, ${receivedUser.full_name || receivedUser.email}!`);
       return true;
 
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.message || err.message || "First-time setup failed.";
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = error.response?.data?.message || error.message || "First-time setup failed.";
       console.error("[AuthContext] firstTimeSetup: API Failed.", errorMsg);
       setError(errorMsg);
       toast.error(errorMsg);
@@ -344,10 +347,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(updatedUser);
       console.log('[AuthContext] Profile updated successfully:', updatedUser);
       toast.success('Profile updated successfully');
-    } catch (err: any) {
-      console.error('[AuthContext] Update profile failed:', err.response?.data || err.message);
-      setError(err.response?.data?.message || 'Failed to update profile.');
-      toast.error(err.response?.data?.message || 'Failed to update profile.');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      console.error('[AuthContext] Update profile failed:', error.response?.data || error.message);
+      setError(error.response?.data?.message || 'Failed to update profile.');
+      toast.error(error.response?.data?.message || 'Failed to update profile.');
     }
   }, [token, user]);
 
@@ -451,8 +455,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(userData);
       setIsFirstLogin(userData.status === 'first_login');
       console.log('[AuthContext] User data refreshed:', userData);
-    } catch (err: any) {
-      console.error('[AuthContext] Refresh user data failed:', err.response?.data || err.message);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      console.error('[AuthContext] Refresh user data failed:', error.response?.data || error.message);
       setError('Failed to refresh user data.');
     } finally {
       setIsLoading(false);

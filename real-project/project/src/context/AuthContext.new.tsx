@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import axios from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 import { getDashboardPathForRole } from '@/lib/auth';
 
 // Define user types
@@ -34,7 +34,7 @@ interface AuthContextType {
   isFirstLogin: boolean;
   error: string | null;
   setError: (error: string | null) => void;
-  api: any; // Axios instance with auth token
+  api: AxiosInstance; // Axios instance with auth token
 }
 
 // Create auth context
@@ -112,8 +112,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(userData);
         setIsFirstLogin(userData.status === 'first_login');
         console.log('[AuthContext] User data loaded:', userData);
-      } catch (err: any) {
-        console.error('[AuthContext] Error loading user:', err.response?.data || err.message);
+      } catch (err: unknown) {
+        const error = err as { response?: { data?: { message?: string } }; message?: string };
+        console.error('[AuthContext] Error loading user:', error.response?.data || error.message);
         setError('Failed to load user profile. Please log in again.');
         setToken(null);
         setAuthToken(null);
@@ -149,10 +150,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('[AuthContext] Login successful:', userData);
       toast.success(`Welcome back, ${userData.full_name || userData.email}!`);
       return true;
-    } catch (err: any) {
-      console.error('[AuthContext] Login failed:', err.response?.data || err.message);
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
-      toast.error(err.response?.data?.message || 'Login failed. Please check your credentials.');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      console.error('[AuthContext] Login failed:', error.response?.data || error.message);
+      setError(error.response?.data?.message || 'Login failed. Please check your credentials.');
+      toast.error(error.response?.data?.message || 'Login failed. Please check your credentials.');
       return false;
     } finally {
       setIsLoading(false);
@@ -169,8 +171,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Redirect to Google OAuth endpoint
       window.location.href = 'http://localhost:5000/api/auth/google';
       return true;
-    } catch (err: any) {
-      console.error('[AuthContext] Google login failed:', err.message);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      console.error('[AuthContext] Google login failed:', error.message);
       setError('Google login failed. Please try again.');
       toast.error('Google login failed. Please try again.');
       setIsLoading(false);
@@ -199,10 +202,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await axios.post('http://localhost:5000/api/auth/request-reset', { email });
       toast.success('Password reset email sent. Please check your inbox.');
-    } catch (err: any) {
-      console.error('[AuthContext] Reset password failed:', err.response?.data || err.message);
-      setError(err.response?.data?.message || 'Failed to send password reset email.');
-      toast.error(err.response?.data?.message || 'Failed to send password reset email.');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      console.error('[AuthContext] Reset password failed:', error.response?.data || error.message);
+      setError(error.response?.data?.message || 'Failed to send password reset email.');
+      toast.error(error.response?.data?.message || 'Failed to send password reset email.');
     }
   };
 
@@ -226,10 +230,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(updatedUser);
       console.log('[AuthContext] Profile updated successfully:', updatedUser);
       toast.success('Profile updated successfully');
-    } catch (err: any) {
-      console.error('[AuthContext] Update profile failed:', err.response?.data || err.message);
-      setError(err.response?.data?.message || 'Failed to update profile.');
-      toast.error(err.response?.data?.message || 'Failed to update profile.');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      console.error('[AuthContext] Update profile failed:', error.response?.data || error.message);
+      setError(error.response?.data?.message || 'Failed to update profile.');
+      toast.error(error.response?.data?.message || 'Failed to update profile.');
     }
   };
 
@@ -251,8 +256,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(userData);
       setIsFirstLogin(userData.status === 'first_login');
       console.log('[AuthContext] User data refreshed:', userData);
-    } catch (err: any) {
-      console.error('[AuthContext] Refresh user data failed:', err.response?.data || err.message);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      console.error('[AuthContext] Refresh user data failed:', error.response?.data || error.message);
       setError('Failed to refresh user data.');
     } finally {
       setIsLoading(false);
